@@ -1,0 +1,9 @@
+[project]
+name = "travelbot"
+version = "0.1.0"
+description = "OTUS Basic Diploma work"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.12",
+]
