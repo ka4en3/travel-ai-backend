@@ -10,7 +10,7 @@ This project is an MVP of a Telegram bot for generating travel itineraries using
 
 ## Technology Stack
 - **Backend**: FastAPI.
-- **Database**: PostgreSQL + SQLAlchemy (ORM).
+- **Database**: PostgreSQL + SQLAlchemy.
 - **Caching**: Redis.
 - **Telegram Bot**: Aiogram.
 - **Containerization**: Docker.
