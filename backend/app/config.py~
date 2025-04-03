@@ -1,0 +1,49 @@
+from pydantic import BaseSettings, Field
+
+
+class DatabaseSettings(BaseSettings):
+    HOST: str = "localhost"
+    PORT: int = 5432
+    USER: str = Field(..., env="POSTGRES_USER")
+    PASSWORD: str = Field(..., env="POSTGRES_PASSWORD")
+    NAME: str = Field(..., env="POSTGRES_DB")
+
+    @property
+    def credentials(self) -> str:
+        return f"{self.USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.NAME}"
+
+    @property
+    def async_url(self) -> str:
+        return f"postgresql+asyncpg://{self.credentials}"
+
+
+class RedisSettings(BaseSettings):
+    URL: str = Field(..., env="REDIS_URL")
+
+
+class BotSettings(BaseSettings):
+    TOKEN: str = Field(..., env="TELEGRAM_TOKEN")
+
+
+class AISettings(BaseSettings):
+    CHATGPT_API_KEY: str = Field(..., env="CHATGPT_API_KEY")
+
+
+class APISettings(BaseSettings):
+    HOST: str = Field("0.0.0.0", env="API_HOST")
+    PORT: int = Field(8000, env="API_PORT")
+
+
+class Settings(BaseSettings):
+    db = DatabaseSettings()
+    redis = RedisSettings()
+    bot = BotSettings()
+    ai = AISettings()
+    api = APISettings()
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+
+settings = Settings()
