@@ -5,16 +5,13 @@ from sqlalchemy import pool
 
 from alembic import context
 
-# Импортируем настройки из config.py
-from app.config import settings
-# Импортируем метаданные из моделей
-from app.database.models import Base
+from app.core.config import settings
+from app.db.base import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-# Задаем URL из переменных окружения (или из настроек)
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 # Interpret the config file for Python logging.

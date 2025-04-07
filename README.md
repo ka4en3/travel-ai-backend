@@ -1,23 +1,20 @@
-# Travel Planning Telegram Bot
+# ✈️ TravelBot AI — Telegram bot for planning of travel routes 
 
-This project is an MVP of a Telegram bot for generating travel itineraries using AI. It was developed as a final project for the OTUS Basic course.
+OTUS Python Basic Thesis Project.  
+A bot that helps to plan travels using AI.
 
-## Description
-- Generate travel itineraries via an external AI API.
-- Collaborative itinerary editing.
-- Export itineraries to PDF.
-- Request caching for optimization.
+## 🚀 The technology stack
 
-## Technology Stack
-- **Backend**: FastAPI.
-- **Database**: PostgreSQL + SQLAlchemy.
-- **Caching**: Redis.
-- **Telegram Bot**: Aiogram.
-- **Containerization**: Docker.
+- FastAPI + SQLAlchemy (async) + PostgreSQL
+- Redis (cache and group editing)
+- Telegram Bot (Aiogram)
+- Docker + Docker Compose
+- Alembic
+- ChatGPT API (routes generation)
 
-## Installation and Setup
-1. Install [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/).
-2. Clone the repository:
+## 📦 Run
+
+1. Clone repository:
    ```bash
    git clone ka4en3/travel-bot
    cd travel-bot

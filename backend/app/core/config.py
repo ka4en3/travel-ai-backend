@@ -1,5 +1,13 @@
 from pydantic import BaseSettings, Field
 
+convention = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+
 
 class DatabaseSettings(BaseSettings):
     HOST: str = "localhost"
@@ -7,6 +15,9 @@ class DatabaseSettings(BaseSettings):
     USER: str = Field(..., env="POSTGRES_USER")
     PASSWORD: str = Field(..., env="POSTGRES_PASSWORD")
     NAME: str = Field(..., env="POSTGRES_DB")
+    echo: bool = False
+    pool_size: int = 50
+    max_overflow: int = 0
 
     @property
     def credentials(self) -> str:

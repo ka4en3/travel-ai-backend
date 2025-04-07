@@ -1,44 +1,68 @@
-travel_bot/
-├── backend/
-│   ├── alembic/                      # Миграции Alembic
-│   │   ├── env.py                    # Основной файл окружения Alembic
-│   │   └── versions/                 # Папка с миграционными скриптами
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── config.py                 # Централизованная конфигурация (загрузка из .env)
-│   │   ├── database/
-│   │   │   ├── __init__.py
-│   │   │   ├── db.py                 # Асинхронное подключение SQLAlchemy (с asyncpg)
-│   │   │   ├── models.py             # SQLAlchemy-модели
-│   │   │   └── crud.py               # Чистые CRUD-функции
-│   │   ├── schemas/                  # Pydantic-схемы для валидации данных
-│   │   │   ├── __init__.py
-│   │   │   └── route_schema.py       # Примеры схем для маршрутов и прочего
-│   │   ├── api/
-│   │   │   ├── __init__.py
-│   │   │   ├── main.py               # Точка входа FastAPI
-│   │   │   ├── routes.py             # Эндпоинты API, использующие Pydantic-схемы
-│   │   │   └── dependencies.py       # Декораторы и зависимости (Depends)
-│   │   └── cache/
-│   │       ├── __init__.py
-│   │       └── redis_client.py       # Асинхронный клиент для работы с Redis
-│   ├── Dockerfile                    # Dockerfile для backend-сервиса
-│   └── requirements.txt              # Зависимости для backend
-├── bot/
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── config.py                 # Конфигурация для бота (например, TOKEN)
-│   │   ├── bot.py                    # Основной файл для запуска Aiogram-бота
-│   │   └── handlers/
-│   │       ├── __init__.py
-│   │       └── commands.py           # Обработчики команд бота
-│   ├── Dockerfile                    # Dockerfile для бота
-│   └── requirements.txt              # Зависимости для бота
-├── tests/
-│   ├── __init__.py
-│   ├── test_api.py                   # Тесты для API (backend)
-│   └── test_bot.py                   # Тесты для логики бота (при необходимости)
-├── exports/                          # Автоматически создаваемая папка для PDF и прочих экспортов
-├── docker-compose.yml                # Компоновка сервисов: backend, bot, db, redis, nginx (если требуется)
-├── .env                            # Файл с переменными окружения
-└── README.md                         # Документация проекта
+travel_planner/
+│
+├── docker-compose.yml               # Docker orchestration for all services
+├── .env                             # Environment variables for app config
+├── .env.example                     # Example .env file
+├── README.md                        # Project documentation
+│
+├── alembic/                         # Alembic migrations
+│   ├── versions/                    # Auto-generated migration files
+│   └── env.py                       # Alembic config and metadata
+│
+├── backend/                         # FastAPI backend service
+│   ├── Dockerfile                   # Dockerfile for backend
+│   ├── requirements.txt             # Backend dependencies
+│   └── app/
+│       ├── main.py                  # FastAPI app entrypoint
+│       │
+│       ├── api/                     # HTTP endpoints
+│       │   └── routes.py            # API routes (plan, edit, export, etc.)
+│       │
+│       ├── core/                    # Core config and logging
+│       │   ├── config.py            # App settings via Pydantic
+│       │   └── logging.py           # Logger setup
+│       │
+│       ├── db/                      # DB setup
+│       │   ├── base.py              # Declarative base for SQLAlchemy
+│       │   ├── session.py           # Async engine and session factory
+│       │   └── init_db.py           # Optional: DB initializer
+│       │
+│       ├── models/                  # SQLAlchemy models
+│       │   ├── __init__.py
+│       │   ├── user.py              # User model
+│       │   ├── route.py             # Route, RouteDay, Activity
+│       │   ├── export.py            # Export model
+│       │   └── ai_cache.py          # AI cache model
+│       │
+│       ├── schemas/                 # Pydantic schemas
+│       │   ├── user.py
+│       │   ├── route.py
+│       │   ├── export.py
+│       │   └── ai_cache.py
+│       │
+│       ├── crud/                    # CRUD functions for models
+│       │   ├── user.py
+│       │   ├── route.py
+│       │   ├── export.py
+│       │   └── ai_cache.py
+│       │
+│       └── services/                # Business logic
+│           ├── ai_service.py        # AI integration (e.g., ChatGPT)
+│           ├── export_service.py    # PDF / Google export
+│           ├── cache_service.py     # Redis caching logic
+│           └── route_service.py     # Route generation and management
+│
+├── bot/                             # Telegram bot service
+│   ├── Dockerfile                   # Dockerfile for bot
+│   ├── requirements.txt             # Bot dependencies
+│   └── app/
+│       ├── bot.py                   # Aiogram entrypoint
+│       ├── config.py                # Bot config
+│       ├── handlers/                # Command logic
+│       │   ├── start.py
+│       │   ├── route.py
+│       │   └── export.py
+│       ├── keyboards/               # Inline/reply keyboards
+│       │   └── route_keyboard.py
+│       └── states/                  # FSM conversation states
+│           └── route_states.py
