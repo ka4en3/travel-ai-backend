@@ -18,8 +18,8 @@ class Route(Base):
     name: Mapped[str] = mapped_column(nullable=False, index=True)
     share_code: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
 
-    origin: Mapped[str] = mapped_column(String, nullable=False)
-    destination: Mapped[str] = mapped_column(String, nullable=False)
+    origin: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    destination: Mapped[str] = mapped_column(String, index=True, nullable=False)
 
     duration_days: Mapped[int] = mapped_column(nullable=False)
     interests: Mapped[list[str]] = mapped_column(JSON, nullable=True)
