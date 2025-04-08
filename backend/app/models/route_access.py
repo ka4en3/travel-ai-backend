@@ -12,7 +12,7 @@ class RouteRole(str, Enum):
 
 class RouteAccess(Base):
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=False
     )
     route_id: Mapped[int] = mapped_column(
         ForeignKey("routes.id", ondelete="CASCADE"), nullable=False
@@ -21,8 +21,12 @@ class RouteAccess(Base):
         PgEnum(RouteRole), nullable=False, default=RouteRole.VIEWER
     )
 
-    user: Mapped["User"] = relationship(back_populates="route_access")
-    route: Mapped["Route"] = relationship(back_populates="access_list")
+    user: Mapped["User"] = relationship(
+        back_populates="route_access",
+    )
+    route: Mapped["Route"] = relationship(
+        back_populates="access_list",
+    )
 
     __table_args__ = (UniqueConstraint("user_id", "route_id", name="uq_user_route"),)
 

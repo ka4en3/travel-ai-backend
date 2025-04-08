@@ -22,13 +22,13 @@ class Route(CreatedAtMixin, Base):
     route_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     owner_id: Mapped[int] = mapped_column(
-        ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     last_edited_by: Mapped[int | None] = mapped_column(
-        ForeignKey("user.id", ondelete="SET NULL"), nullable=True
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     ai_cache_id: Mapped[int | None] = mapped_column(
-        ForeignKey("aicache.id", ondelete="SET NULL"), nullable=True
+        ForeignKey("aicaches.id", ondelete="SET NULL"), nullable=True
     )
 
     updated_at: Mapped[datetime] = mapped_column(
@@ -40,16 +40,23 @@ class Route(CreatedAtMixin, Base):
     )
 
     owner: Mapped["User"] = relationship(
-        backref="owned_routes", foreign_keys=[owner_id]
+        back_populates="owned_routes", foreign_keys=[owner_id]
     )
     access_list: Mapped[list["RouteAccess"]] = relationship(
-        back_populates="route", cascade="all, delete-orphan"
+        back_populates="route",
+        cascade="all, delete-orphan",
     )
     days: Mapped[List["RouteDay"]] = relationship(
-        back_populates="route", cascade="all, delete-orphan"
+        back_populates="route",
+        cascade="all, delete-orphan",
     )
-
-    ai_cache: Mapped["AICache"] = relationship(back_populates="routes")
+    ai_cache: Mapped["AICache"] = relationship(
+        back_populates="routes",
+    )
+    exports: Mapped[list["Export"]] = relationship(
+        back_populates="route",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<Route(id={self.id}, destination={self.destination})>"
@@ -57,15 +64,18 @@ class Route(CreatedAtMixin, Base):
 
 class RouteDay(Base):
     route_id: Mapped[int] = mapped_column(
-        ForeignKey("route.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("routes.id", ondelete="CASCADE"), nullable=False
     )
     day_number: Mapped[int] = mapped_column(nullable=False)
     description: Mapped[str | None] = mapped_column(nullable=True)
     date: Mapped[datetime | None] = mapped_column(nullable=True)
 
-    route: Mapped["Route"] = relationship(back_populates="days")
+    route: Mapped["Route"] = relationship(
+        back_populates="days",
+    )
     activities: Mapped[List["Activity"]] = relationship(
-        back_populates="day", cascade="all, delete-orphan"
+        back_populates="day",
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self) -> str:
@@ -74,7 +84,7 @@ class RouteDay(Base):
 
 class Activity(Base):
     day_id: Mapped[int] = mapped_column(
-        ForeignKey("routeday.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("routedays.id", ondelete="CASCADE"), nullable=False
     )
     name: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str | None] = mapped_column(nullable=True)
@@ -86,7 +96,9 @@ class Activity(Base):
     activity_type: Mapped[str | None] = mapped_column(nullable=True)
     external_link: Mapped[str | None] = mapped_column(nullable=True)
 
-    day: Mapped["RouteDay"] = relationship(back_populates="activities")
+    day: Mapped["RouteDay"] = relationship(
+        back_populates="activities",
+    )
 
     def __repr__(self) -> str:
         return f"<Activity(name={self.name}, type={self.activity_type})>"

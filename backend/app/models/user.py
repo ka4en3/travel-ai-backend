@@ -22,8 +22,23 @@ class User(CreatedAtMixin, Base):
         server_default=func.now(),
     )
 
+    owned_routes: Mapped[list["Route"]] = relationship(
+        back_populates="owner",
+        foreign_keys="[Route.owner_id]",
+        cascade="all, delete-orphan",
+    )
+
+    ai_cache_entries: Mapped[list["AICache"]] = relationship(
+        back_populates="user",
+    )
+
     route_access: Mapped[list["RouteAccess"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
+        back_populates="user",
+    )
+
+    exports: Mapped[list["Export"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self) -> str:

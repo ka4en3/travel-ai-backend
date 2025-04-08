@@ -25,18 +25,19 @@ class AICache(CreatedAtMixin, Base):
 
     source: Mapped[str] = mapped_column(nullable=False, default="bot")
 
-    user_id: Mapped[int | None] = mapped_column(
-        ForeignKey("user.id", ondelete="SET NULL"), nullable=True
-    )
-
     expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
 
-    user: Mapped["User"] = relationship()
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    user: Mapped["User"] = relationship(
+        back_populates="ai_cache_entries",
+    )
 
     routes: Mapped[list["Route"]] = relationship(
-        back_populates="ai_cache", cascade="all, delete-orphan"
+        back_populates="ai_cache",
     )
 
     __table_args__ = (
