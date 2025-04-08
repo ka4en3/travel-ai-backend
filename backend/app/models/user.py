@@ -1,7 +1,7 @@
 from datetime import datetime
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import DateTime
-from sqlalchemy import func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import DateTime, func
+
 from app.db.base import Base
 from app.models.mixins import CreatedAtMixin
 
@@ -14,10 +14,17 @@ class User(CreatedAtMixin, Base):
     language: Mapped[str | None] = mapped_column(nullable=True, default="en")
     is_premium: Mapped[bool] = mapped_column(nullable=False, default=False)
     is_bot: Mapped[bool] = mapped_column(nullable=False, default=False)
-    last_active: Mapped[datetime] = mapped_column(DateTime(timezone=True),
-                                                  nullable=False,
-                                                  default=func.now(),
-                                                  server_default=func.now())
+
+    last_active: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=func.now(),
+        server_default=func.now(),
+    )
+
+    route_access: Mapped[list["RouteAccess"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, telegram_id={self.telegram_id}, username={self.username})>"

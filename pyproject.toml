@@ -19,3 +19,8 @@ dependencies = [
     "sqlalchemy>=2.0.40",
     "uvicorn>=0.34.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "black>=25.1.0",
+]
