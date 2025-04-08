@@ -1,10 +1,19 @@
+import os
+import sys
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
+from sqlalchemy import engine_from_config, pool
+from sqlalchemy.engine import Connection
 from alembic import context
 
+# load .env
+from dotenv import load_dotenv
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+print(f"!!!{BASE_DIR}!!!")
+print(load_dotenv(os.path.join(BASE_DIR, ".env")))
+
+# import settings and metadata
 from app.core.config import settings
 from app.db.base import Base
 
@@ -58,16 +67,15 @@ def run_migrations_online():
         async with connectable.connect() as connection:
             await connection.run_sync(
                 lambda sync_connection: context.configure(
-                    connection=sync_connection,
-                    target_metadata=target_metadata
+                    connection=sync_connection, target_metadata=target_metadata
                 )
             )
             async with connection.begin():
                 await connection.run_sync(context.run_migrations)
 
     import asyncio
-    asyncio.run(do_run_migrations())
 
+    asyncio.run(do_run_migrations())
 
 
 if context.is_offline_mode():
