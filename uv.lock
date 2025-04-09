@@ -767,7 +767,6 @@ dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
-    { name = "python-dotenv" },
     { name = "redis" },
     { name = "reportlab" },
     { name = "sqlalchemy" },
@@ -777,6 +776,7 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "black" },
+    { name = "python-dotenv" },
 ]
 
 [package.metadata]
@@ -790,7 +790,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.10.6" },
     { name = "pydantic-settings", specifier = ">=2.8.1" },
-    { name = "python-dotenv", specifier = ">=1.1.0" },
+    { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1.1.0" },
     { name = "redis", specifier = ">=5.2.1" },
     { name = "reportlab", specifier = ">=4.3.1" },
     { name = "sqlalchemy", specifier = ">=2.0.40" },

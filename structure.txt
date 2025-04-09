@@ -1,4 +1,4 @@
-travel_bot_backend/			 	 # FastAPI backend service
+travel-ai-backend/			 	 # FastAPI backend service
 │
 ├── docker-compose.yml           # Docker orchestration for all services
 ├── .env                         # Environment variables for app config

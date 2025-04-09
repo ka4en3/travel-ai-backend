@@ -16,8 +16,8 @@ COPY backend/requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY app ./app
-COPY alembic ./alembic
-COPY alembic.ini .
+COPY backend/alembic ./alembic
+COPY backend/alembic.ini .
 
 EXPOSE 8000
 

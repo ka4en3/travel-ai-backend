@@ -7,8 +7,7 @@ from sqlalchemy.engine import Connection
 from alembic import context
 
 # load .env
-from dotenv import load_dotenv, dotenv_values
-
+# from dotenv import load_dotenv, dotenv_values
 # BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 # res = load_dotenv(os.path.join(BASE_DIR, ".env"))
 # print(f".env file loaded ? {res}")

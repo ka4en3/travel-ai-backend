@@ -45,11 +45,8 @@ class Settings(BaseSettings):
     API_PORT: int = Field(default=8000, ge=1, le=65535)
 
     class Config:
-        env_file = os.path.join(os.path.dirname(__file__), "..", "..", "..", ".env")
-        # env_file = os.getenv("ENV_FILE", ".env")
+        env_file = os.getenv("ENV_FILE", ".env")
         env_file_encoding = "utf-8"
-        # case_sensitive = True  # Ensure exact matching of env variable names
-        # extra = "ignore"
 
     # Database properties
     @property
