@@ -7,11 +7,12 @@ from sqlalchemy.engine import Connection
 from alembic import context
 
 # load .env
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-print(f"!!!{BASE_DIR}!!!")
-print(load_dotenv(os.path.join(BASE_DIR, ".env")))
+# BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+# res = load_dotenv(os.path.join(BASE_DIR, ".env"))
+# print(f".env file loaded ? {res}")
+# sys.path.append(os.path.join(BASE_DIR, "backend"))
 
 # import settings and metadata
 from app.core.config import settings
@@ -21,7 +22,7 @@ from app.db.base import Base
 # access to the values within the .ini file in use.
 config = context.config
 
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", settings.db_async_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

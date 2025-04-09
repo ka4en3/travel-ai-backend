@@ -3,10 +3,13 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 
 engine = create_async_engine(
-    settings.db.async_url,
-    echo=settings.db.echo,
-    pool_size=settings.db.pool_size,
-    max_overflow=settings.db.max_overflow,
+    settings.db_async_url,
+    connect_args={
+        "timeout": settings.DB_CONNECT_TIMEOUT,
+    },
+    echo=settings.DB_ECHO,
+    pool_size=settings.DB_POOL_SIZE,
+    max_overflow=settings.DB_MAX_OVERFLOW,
     future=True,
 )
 

@@ -1,7 +1,13 @@
-from pydantic import Field
-from pydantic import BaseModel
+from pydantic import Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings
+import os
+import logging
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# SQLAlchemy naming conventions for Alembic
 convention = {
     "ix": "ix_%(column_0_label)s",
     "uq": "uq_%(table_name)s_%(column_0_name)s",
@@ -11,61 +17,91 @@ convention = {
 }
 
 
-class DatabaseSettings(BaseModel):
-    HOST: str = "localhost"
-    PORT: int = 5432
-    USER: str
-    PASSWORD: str
-    NAME: str
-    echo: bool = False
-    pool_size: int = 50
-    max_overflow: int = 0
-
-    @property
-    def credentials(self) -> str:
-        return f"{self.USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.NAME}"
-
-    @property
-    def async_url(self) -> str:
-        return f"postgresql+asyncpg://{self.credentials}"
-
-
-class RedisSettings(BaseSettings):
-    URL: str = Field(..., env="REDIS_URL")
-
-
-class BotSettings(BaseSettings):
-    TOKEN: str = Field(..., env="TELEGRAM_TOKEN")
-
-
-class AISettings(BaseSettings):
-    CHATGPT_API_KEY: str = Field(..., env="CHATGPT_API_KEY")
-
-
-class APISettings(BaseSettings):
-    HOST: str = Field("0.0.0.0", env="API_HOST")
-    PORT: int = Field(8000, env="API_PORT")
-
-
 class Settings(BaseSettings):
-    db = DatabaseSettings()
-    db.USER = Field(..., env="POSTGRES_USER")
-    db.PASSWORD = Field(..., env="POSTGRES_PASSWORD")
-    db.NAME = Field(..., env="POSTGRES_DB")
-    # redis = RedisSettings()
-    # bot = BotSettings()
-    # ai = AISettings()
-    # api = APISettings()
+    # Database settings (match .env variable names exactly)
+    POSTGRES_USER: str = Field(...)
+    POSTGRES_PASSWORD: str = Field(...)
+    POSTGRES_DB: str = Field(...)
+    DB_HOST: str = Field(default="localhost")
+    DB_PORT: int = Field(default=5432, ge=1)
+    DB_ECHO: bool = Field(default=False)
+    DB_POOL_SIZE: int = Field(
+        default=50,
+    )
+    DB_MAX_OVERFLOW: int = Field(default=0)
+    DB_CONNECT_TIMEOUT: int = Field(default=30)
+
+    # Redis settings
+    REDIS_URL: str = Field(...)
+
+    # Bot settings
+    TELEGRAM_TOKEN: str = Field(...)
+
+    # AI settings
+    CHATGPT_API_KEY: str = Field(...)
+
+    # API settings
+    API_HOST: str = Field(default="0.0.0.0")
+    API_PORT: int = Field(default=8000, ge=1, le=65535)
 
     class Config:
-        env_file = ".env"
+        # env_file = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
+        env_file = os.getenv("ENV_FILE", ".env")
         env_file_encoding = "utf-8"
+        # case_sensitive = True  # Ensure exact matching of env variable names
+        # extra = "ignore"
 
-    def display(self):
-        print("DATABASE:", self.db.async_url)
-        print("REDIS:", self.redis.URL)
-        print("BOT TOKEN:", "***" if self.bot.TOKEN else "None")
-        print("CHATGPT KEY:", "***" if self.ai.CHATGPT_API_KEY else "None")
+    # Database properties
+    @property
+    def db_credentials(self) -> str:
+        return f"{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.POSTGRES_DB}"
+
+    @property
+    def db_async_url(self) -> str:
+        return f"postgresql+asyncpg://{self.db_credentials}"
+
+    # Validator for Redis URL
+    @field_validator("REDIS_URL")
+    def validate_redis_url(cls, v: str) -> str:
+        if not v.startswith("redis://"):
+            raise ValueError("Redis URL must start with 'redis://'")
+        return v
+
+    def display(self) -> None:
+        """Display settings with masked sensitive data."""
+        masked_db_url = self.db_async_url.replace(self.POSTGRES_PASSWORD, "***")
+        logger.info("DATABASE: %s", masked_db_url)
+        logger.info("REDIS: %s", self.REDIS_URL)
+        logger.info("BOT TOKEN: %s", "***" if self.TELEGRAM_TOKEN else "None")
+        logger.info("CHATGPT KEY: %s", "***" if self.CHATGPT_API_KEY else "None")
 
 
-settings = Settings()
+# Singleton instance with error handling
+try:
+    settings = Settings()
+except ValidationError as e:
+    logger.error("Configuration validation failed: %s", e)
+    raise
+except Exception as e:
+    logger.error("Unexpected error during settings initialization: %s", e)
+    raise
+
+
+# Optional: Function to load settings for testing
+def get_test_settings() -> Settings:
+    """Create a test settings instance with mock data."""
+    test_data = {
+        "POSTGRES_USER": "test_user",
+        "POSTGRES_PASSWORD": "test_pass",
+        "POSTGRES_DB": "test_db",
+        "REDIS_URL": "redis://localhost:6379",
+        "TELEGRAM_TOKEN": "test_token",
+        "CHATGPT_API_KEY": "test_key",
+        "API_HOST": "127.0.0.1",
+        "API_PORT": 8001,
+    }
+    return Settings(**test_data)
+
+
+if __name__ == "__main__":
+    settings.display()
