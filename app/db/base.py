@@ -1,16 +1,10 @@
-from sqlalchemy import MetaData
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import declared_attr
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from app.core.config import convention
+from app.db.base_class import Base
 
-
-class Base(DeclarativeBase):
-    metadata = MetaData(naming_convention=convention)
-
-    id: Mapped[int] = mapped_column(primary_key=True, index=True, nullable=False)
-
-    @declared_attr.directive
-    def __tablename__(cls) -> str:
-        return f"{cls.__name__.lower()}s"
+# Import all models so that they are included in the metadata
+from app.models.user import User
+from app.models.route import Route
+from app.models.route import RouteDay
+from app.models.route import Activity
+from app.models.route_access import RouteAccess
+from app.models.ai_cache import AICache
+from app.models.export import Export

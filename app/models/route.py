@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy import ForeignKey, String, Integer, DateTime, JSON, Table, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base
+from app.db.base_class import Base
 from app.models.mixins import CreatedAtMixin
 
 

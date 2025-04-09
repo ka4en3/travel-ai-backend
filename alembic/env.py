@@ -1,17 +1,11 @@
-import os
-import sys
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+import asyncio
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.engine import Connection
 from alembic import context
-
-# load .env
-# from dotenv import load_dotenv, dotenv_values
-# BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-# res = load_dotenv(os.path.join(BASE_DIR, ".env"))
-# print(f".env file loaded ? {res}")
-# sys.path.append(os.path.join(BASE_DIR, "backend"))
 
 # import settings and metadata
 from app.core.config import settings
@@ -33,6 +27,7 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
+
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -56,7 +51,6 @@ def run_migrations_offline():
 
 def run_migrations_online():
     """Run migrations in 'online' mode."""
-    from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
     connectable = create_async_engine(
         config.get_main_option("sqlalchemy.url"),
@@ -65,15 +59,17 @@ def run_migrations_online():
 
     async def do_run_migrations():
         async with connectable.connect() as connection:
-            await connection.run_sync(
-                lambda sync_connection: context.configure(
-                    connection=sync_connection, target_metadata=target_metadata
-                )
-            )
-            async with connection.begin():
-                await connection.run_sync(context.run_migrations)
 
-    import asyncio
+            def do_migrations(sync_conn):
+                context.configure(
+                    connection=sync_conn,
+                    target_metadata=target_metadata,
+                    compare_type=True,
+                    compare_server_default=True,
+                )
+                context.run_migrations()
+
+            await connection.run_sync(do_migrations)
 
     asyncio.run(do_run_migrations())
 
