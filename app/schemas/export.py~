@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
-from models.export import ExportType, ExportStatus
+from app.models.export import ExportType, ExportStatus
 
 
 class ExportBase(BaseModel):

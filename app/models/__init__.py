@@ -1,8 +1,8 @@
-# from app.models.user import User
-# from app.models.route import Route, RouteDay, Activity
-# from app.models.export import Export, ExportType
-# from app.models.ai_cache import AICache
-# from app.models.route_access import RouteAccess, RouteRole
+# from models.user import User
+# from models.route import Route, RouteDay, Activity
+# from models.export import Export, ExportType
+# from models.ai_cache import AICache
+# from models.route_access import RouteAccess, RouteRole
 
 
 # __all__ = [

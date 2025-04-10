@@ -2,8 +2,8 @@ from datetime import datetime
 from sqlalchemy import String, DateTime, Text, JSON, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base_class import Base
-from app.models.mixins import CreatedAtMixin
+from db.base_class import Base
+from models.mixins import CreatedAtMixin
 
 
 class AICache(CreatedAtMixin, Base):

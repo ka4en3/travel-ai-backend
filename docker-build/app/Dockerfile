@@ -23,9 +23,9 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Copy the whole backend app
 COPY app ./app
 
-COPY alembic.ini .
-COPY alembic ./alembic
-COPY entrypoint.sh /entrypoint.sh
+COPY app/alembic.ini .
+COPY app/alembic ./alembic
+COPY app/entrypoint.sh /entrypoint.sh
 
 EXPOSE 8000
 

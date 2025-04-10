@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.models.route_access import RouteRole
+from models.route_access import RouteRole
 
 
 class RouteAccessBase(BaseModel):
