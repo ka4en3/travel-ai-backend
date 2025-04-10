@@ -10,6 +10,7 @@ class RouteRole(Enum):
     VIEWER = "viewer"
 
 
+# Many-to-many relationship for shared routes
 class RouteAccess(Base):
     __tablename__ = "route_access"
 

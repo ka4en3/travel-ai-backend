@@ -19,8 +19,12 @@ class Route(CreatedAtMixin, Base):
     origin: Mapped[str] = mapped_column(String, index=True, nullable=False)
     destination: Mapped[str] = mapped_column(String, index=True, nullable=False)
     duration_days: Mapped[int] = mapped_column(nullable=False)
-    interests: Mapped[list[str]] = mapped_column(JSON, nullable=True)
+    interests: Mapped[list[str]] = mapped_column(
+        JSON, nullable=True
+    )  # Stored as a JSON array
     budget: Mapped[float] = mapped_column(nullable=False)
+
+    # Route data - stores the actual AI-generated route
     route_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     owner_id: Mapped[int] = mapped_column(
@@ -30,7 +34,7 @@ class Route(CreatedAtMixin, Base):
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     ai_cache_id: Mapped[int | None] = mapped_column(
-        ForeignKey("aicaches.id", ondelete="SET NULL"), nullable=True
+        ForeignKey("ai_cache.id", ondelete="SET NULL"), nullable=True
     )
 
     updated_at: Mapped[datetime] = mapped_column(
@@ -65,7 +69,7 @@ class Route(CreatedAtMixin, Base):
 
 
 class RouteDay(Base):
-    __tablename__ = "routedays"
+    __tablename__ = "route_days"
 
     route_id: Mapped[int] = mapped_column(
         ForeignKey("routes.id", ondelete="CASCADE"), nullable=False
@@ -90,16 +94,18 @@ class Activity(Base):
     __tablename__ = "activities"
 
     day_id: Mapped[int] = mapped_column(
-        ForeignKey("routedays.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("route_days.id", ondelete="CASCADE"), nullable=False
     )
     name: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str | None] = mapped_column(nullable=True)
-    start_time: Mapped[str | None] = mapped_column(nullable=True)
-    end_time: Mapped[str | None] = mapped_column(nullable=True)
+    start_time: Mapped[str | None] = mapped_column(nullable=True)  # Format: "HH:MM"
+    end_time: Mapped[str | None] = mapped_column(nullable=True)  # Format: "HH:MM"
     location: Mapped[str | None] = mapped_column(nullable=True)
-    cost: Mapped[float | None] = mapped_column(nullable=True)
+    cost: Mapped[float | None] = mapped_column(nullable=True)  # Estimated cost
     notes: Mapped[str | None] = mapped_column(nullable=True)
-    activity_type: Mapped[str | None] = mapped_column(nullable=True)
+    activity_type: Mapped[str | None] = mapped_column(
+        nullable=True
+    )  # e.g., "Sightseeing", "Food", "Transportation"
     external_link: Mapped[str | None] = mapped_column(nullable=True)
 
     day: Mapped["RouteDay"] = relationship(

@@ -44,11 +44,11 @@ class Export(CreatedAtMixin, Base):
     file_path: Mapped[str | None] = mapped_column(
         String,
         nullable=True,
-    )  # For PDF
+    )  # For PDF exports
     external_id: Mapped[str | None] = mapped_column(
         String,
         nullable=True,
-    )  # For Google APIs
+    )  # For Google Calendar/Docs exports
     error_message: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
