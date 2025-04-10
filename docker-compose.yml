@@ -1,12 +1,10 @@
 services:
-  db:
+  pg:
     image: postgres:16
-    container_name: db
+    container_name: pg
     restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+    env_file:
+      - ./app/.env
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -17,37 +15,45 @@ services:
       timeout: 5s
       retries: 5
 
-#  redis:
-#    image: redis:6
-#    container_name: redis
-#    restart: always
-#    ports:
-#      - "6379:6379"
-#    volumes:
-#      - redisdata:/data
-#    healthcheck:
-#      test: ["CMD", "redis-server", "--test-memory", "1"]
-#      interval: 5s
-#      timeout: 5s
-#      retries: 5
+  #  redis:
+  #    image: redis:6
+  #    container_name: redis
+  #    restart: always
+  #    ports:
+  #      - "6379:6379"
+  #    volumes:
+  #      - redisdata:/data
+  #    healthcheck:
+  #      test: ["CMD", "redis-server", "--test-memory", "1"]
+  #      interval: 5s
+  #      timeout: 5s
+  #      retries: 5
 
-#  backend:
-#    build: ./backend
-#    container_name: backend
-#    env_file: .env
-#    depends_on:
-#      db:
-#        condition: service_healthy
-#      redis:
-#        condition: service_healthy
-#    ports:
-#      - "8000:8000"
-#    healthcheck:
-#      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-#      interval: 10s
-#      timeout: 10s
-#      retries: 5
+  api:
+    build:
+      context: .
+      dockerfile: docker-build/app/Dockerfile
+    container_name: api
+    restart: always
+    env_file:
+      - ./app/.env
+    environment:
+      DB_HOST: pg
+    depends_on:
+      pg:
+        condition: service_healthy
+    #      redis:
+    #        condition: service_healthy
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./app:/app
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
 volumes:
   pgdata:
-  redisdata:
+#  redisdata:
