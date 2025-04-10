@@ -1,17 +1,22 @@
 travel-ai-backend/			 	 # FastAPI backend service
 │
 ├── docker-compose.yml           # Docker orchestration for all services
-├── .env                         # Environment variables for app config
-├── .env.example                 # Example .env file
 ├── README.md                    # Project documentation
-├── Dockerfile                   # Dockerfile for backend
-├── requirements.txt           	 # Backend dependencies
+├── requirements.txt           	 # Project dependencies
+├── pyproject.toml           	 # Project dependencies
 │
-├── alembic/                     # Alembic migrations
-│   ├── versions/                # Auto-generated migration files
-│   └── env.py                   # Alembic config and metadata
+├───docker-build/
+│   └── app/
+│       └── Dockerfile           # Dockerfile for backend
 │
 ├───app/
+│   ├── alembic/                 # Alembic migrations
+│   │   ├── versions/            # Auto-generated migration files
+│   │   └── env.py               # Alembic config and metadata
+│   │
+│   ├── .env                     # Environment variables for app config
+│   ├── .env.example             # Example .env file
+│   │
 │   ├── main.py                	 # FastAPI app entrypoint
 │   │
 │   ├── api/                     # HTTP endpoints
