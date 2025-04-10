@@ -7,6 +7,8 @@ from app.models.mixins import CreatedAtMixin
 
 
 class User(CreatedAtMixin, Base):
+    __tablename__ = "users"
+
     telegram_id: Mapped[int] = mapped_column(unique=True, index=True, nullable=False)
     username: Mapped[str | None] = mapped_column(nullable=True, index=True)
     first_name: Mapped[str] = mapped_column(nullable=False)

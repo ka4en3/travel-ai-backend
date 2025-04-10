@@ -11,6 +11,6 @@ class Base(DeclarativeBase):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True, nullable=False)
 
-    @declared_attr.directive
-    def __tablename__(cls) -> str:
-        return f"{cls.__name__.lower()}s"
+    # @declared_attr.directive
+    # def __tablename__(cls) -> str:
+    #     return f"{cls.__name__.lower()}s"

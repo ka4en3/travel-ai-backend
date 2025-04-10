@@ -19,7 +19,7 @@ class ExportStatus(Enum):
 
 
 class Export(CreatedAtMixin, Base):
-    __tablename__ = "exports"
+    __table__ = "exports"
 
     route_id: Mapped[int] = mapped_column(
         ForeignKey("routes.id", ondelete="CASCADE"),

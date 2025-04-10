@@ -15,7 +15,12 @@ from app.db.base import Base
 # access to the values within the .ini file in use.
 config = context.config
 
+
 config.set_main_option("sqlalchemy.url", settings.db_async_url)
+# !!! DEBUG !!!
+print("DB URL:", config.get_main_option("sqlalchemy.url"))
+# !!! DEBUG !!!
+
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -28,6 +33,11 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
+# !!! DEBUG !!!
+print("📦 Tables in metadata:")
+for table_name in target_metadata.tables.keys():
+    print(f" - {table_name}")
+# !!! DEBUG !!!
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -51,27 +61,44 @@ def run_migrations_offline():
 
 def run_migrations_online():
     """Run migrations in 'online' mode."""
+    try:
+        connectable = create_async_engine(
+            config.get_main_option("sqlalchemy.url"),
+            poolclass=pool.NullPool,
+        )
 
-    connectable = create_async_engine(
-        config.get_main_option("sqlalchemy.url"),
-        poolclass=pool.NullPool,
-    )
+        async def do_run_migrations():
+            try:
+                async with connectable.connect() as connection:
 
-    async def do_run_migrations():
-        async with connectable.connect() as connection:
+                    def do_migrations(sync_conn):
+                        try:
+                            context.configure(
+                                connection=sync_conn,
+                                target_metadata=target_metadata,
+                                compare_type=True,
+                                compare_server_default=True,
+                                transaction_per_migration=True,
+                            )
+                            context.run_migrations()
 
-            def do_migrations(sync_conn):
-                context.configure(
-                    connection=sync_conn,
-                    target_metadata=target_metadata,
-                    compare_type=True,
-                    compare_server_default=True,
-                )
-                context.run_migrations()
+                            # !Explicitly commit the transaction!
+                            # sync_conn.commit()
 
-            await connection.run_sync(do_migrations)
+                            print("Migrations executed successfully!")
+                        except Exception as e:
+                            print(f"Error in do_migrations: {e}")
+                            raise
 
-    asyncio.run(do_run_migrations())
+                    await connection.run_sync(do_migrations)
+            except Exception as e:
+                print(f"Error in do_run_migrations: {e}")
+                raise
+
+        asyncio.run(do_run_migrations())
+    except Exception as e:
+        print(f"Error in run_migrations_online: {e}")
+        raise
 
 
 if context.is_offline_mode():

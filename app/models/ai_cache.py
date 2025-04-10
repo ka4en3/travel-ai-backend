@@ -7,6 +7,8 @@ from app.models.mixins import CreatedAtMixin
 
 
 class AICache(CreatedAtMixin, Base):
+    __tablename__ = "aicaches"
+
     cache_key: Mapped[str] = mapped_column(
         String, unique=True, index=True, nullable=False
     )

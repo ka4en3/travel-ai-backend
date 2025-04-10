@@ -4,13 +4,15 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base_class import Base
 
 
-class RouteRole(str, Enum):
+class RouteRole(Enum):
     CREATOR = "creator"
     EDITOR = "editor"
     VIEWER = "viewer"
 
 
 class RouteAccess(Base):
+    __tablename__ = "route_access"
+
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=False
     )

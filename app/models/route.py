@@ -8,6 +8,8 @@ from app.models.mixins import CreatedAtMixin
 
 
 class Route(CreatedAtMixin, Base):
+    __tablename__ = "routes"
+
     name: Mapped[str] = mapped_column(nullable=False, index=True)
     share_code: Mapped[str] = mapped_column(
         String, unique=True, index=True, nullable=False
@@ -63,6 +65,8 @@ class Route(CreatedAtMixin, Base):
 
 
 class RouteDay(Base):
+    __tablename__ = "routedays"
+
     route_id: Mapped[int] = mapped_column(
         ForeignKey("routes.id", ondelete="CASCADE"), nullable=False
     )
@@ -83,6 +87,8 @@ class RouteDay(Base):
 
 
 class Activity(Base):
+    __tablename__ = "activities"
+
     day_id: Mapped[int] = mapped_column(
         ForeignKey("routedays.id", ondelete="CASCADE"), nullable=False
     )
