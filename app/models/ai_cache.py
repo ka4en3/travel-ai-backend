@@ -1,3 +1,5 @@
+# app/models/ai_cache.py
+
 from datetime import datetime
 from sqlalchemy import String, DateTime, Text, JSON, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship

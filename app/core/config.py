@@ -1,3 +1,5 @@
+# app/core/config.py
+
 from pydantic import Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings
 import os

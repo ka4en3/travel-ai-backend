@@ -1,3 +1,5 @@
+# app/models/__init__.py
+
 # from models.user import User
 # from models.route import Route, RouteDay, Activity
 # from models.export import Export, ExportType

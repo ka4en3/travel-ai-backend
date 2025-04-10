@@ -1,3 +1,5 @@
+# app/db/base_class.py
+
 from db.base_class import Base
 
 # Import all models so that they are included in the metadata

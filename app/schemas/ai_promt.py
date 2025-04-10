@@ -1,3 +1,5 @@
+# app/schemas/ai_promt.py
+
 from pydantic import BaseModel
 from typing import List
 

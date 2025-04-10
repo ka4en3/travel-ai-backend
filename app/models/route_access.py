@@ -1,3 +1,5 @@
+# app/models/route_access.py
+
 from enum import Enum
 from sqlalchemy import ForeignKey, Enum as PgEnum, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship

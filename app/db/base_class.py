@@ -1,3 +1,5 @@
+# app/db/base_class.py
+
 from sqlalchemy import MetaData
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import declared_attr
