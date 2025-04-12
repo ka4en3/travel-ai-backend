@@ -1,11 +1,11 @@
 # app/schemas/route.py
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional, List
 from datetime import datetime
 
 
-# ---------- Activity ----------
+# ================= ACTIVITY ================= #
 
 
 class ActivityBase(BaseModel):
@@ -21,7 +21,19 @@ class ActivityBase(BaseModel):
 
 
 class ActivityCreate(ActivityBase):
-    pass
+    @field_validator("name")
+    @classmethod
+    def name_not_empty(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Activity name can't be empty")
+        return value
+
+    @field_validator("cost")
+    @classmethod
+    def cost_positive(cls, value: float) -> float:
+        if value is not None and value < 0:
+            raise ValueError("Cost must be positive")
+        return value
 
 
 class ActivityRead(ActivityBase):
@@ -31,7 +43,7 @@ class ActivityRead(ActivityBase):
         from_attributes = True
 
 
-# ---------- RouteDay ----------
+# ================= ROUTE DAY ================= #
 
 
 class RouteDayBase(BaseModel):
@@ -43,6 +55,13 @@ class RouteDayBase(BaseModel):
 class RouteDayCreate(RouteDayBase):
     activities: List[ActivityCreate] = []
 
+    @field_validator("day_number")
+    @classmethod
+    def validate_day_number(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("Day number must be greater than zero")
+        return value
+
 
 class RouteDayRead(RouteDayBase):
     id: int
@@ -52,35 +71,59 @@ class RouteDayRead(RouteDayBase):
         from_attributes = True
 
 
-# ---------- Route ----------
+# ================= ROUTE ================= #
 
 
 class RouteBase(BaseModel):
-    name: str
     origin: str
     destination: str
     duration_days: int
-    interests: Optional[List[str]] = None
     budget: float
-    is_public: bool = False
+    owner_id: int
+    route_data: dict
+    share_code: str
+    interests: List[str] = []
 
 
 class RouteCreate(RouteBase):
-    share_code: str
-    route_data: Optional[dict] = None
     ai_cache_id: Optional[int] = None
-    days: List[RouteDayCreate] = []
+
+    @field_validator("origin", "destination")
+    @classmethod
+    def validate_location(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Location must be a non-empty string")
+        return value
+
+    @field_validator("duration_days")
+    @classmethod
+    def validate_duration(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("Duration must be at least 1 day")
+        return value
+
+    @field_validator("budget")
+    @classmethod
+    def validate_budget(cls, value: float) -> float:
+        if value <= 0:
+            raise ValueError("Budget must be greater than zero")
+        return value
+
+    @field_validator("ai_cache_id")
+    @classmethod
+    def validate_budget(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("ID(ai_cache_id) must be a positive integer")
+        return value
 
 
 class RouteRead(RouteBase):
     id: int
-    share_code: str
+    name: str
+    days: List[RouteDayRead] = []
     created_at: datetime
     updated_at: datetime
-    owner_id: int
     last_edited_by: Optional[int] = None
-    route_data: Optional[dict] = None
-    days: List[RouteDayRead] = []
 
     class Config:
         from_attributes = True
@@ -89,8 +132,11 @@ class RouteRead(RouteBase):
 class RouteShort(BaseModel):
     id: int
     name: str
+    share_code: str
+    origin: str
     destination: str
     duration_days: int
+    budget: float
 
     class Config:
         from_attributes = True
@@ -105,3 +151,24 @@ class RouteUpdate(BaseModel):
     budget: Optional[float] = None
     is_public: Optional[bool] = None
     route_data: Optional[dict] = None
+
+    @field_validator("origin", "destination")
+    @classmethod
+    def validate_location(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and not value.strip():
+            raise ValueError("Location must be a non-empty string")
+        return value
+
+    @field_validator("duration_days")
+    @classmethod
+    def validate_duration(cls, value: Optional[int]) -> Optional[int]:
+        if value is not None and value <= 0:
+            raise ValueError("Duration must be at least 1 day")
+        return value
+
+    @field_validator("budget")
+    @classmethod
+    def validate_budget(cls, value: Optional[float]) -> Optional[float]:
+        if value is not None and value <= 0:
+            raise ValueError("Budget must be greater than zero")
+        return value

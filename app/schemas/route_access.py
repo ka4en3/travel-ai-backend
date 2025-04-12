@@ -1,6 +1,6 @@
 # app/schemas/route_access.py
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from models.route_access import RouteRole
 
@@ -12,7 +12,12 @@ class RouteAccessBase(BaseModel):
 
 
 class RouteAccessCreate(RouteAccessBase):
-    pass
+    @field_validator("user_id", "route_id")
+    @classmethod
+    def validate_budget(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("ID must be a positive integer")
+        return value
 
 
 class RouteAccessRead(RouteAccessBase):

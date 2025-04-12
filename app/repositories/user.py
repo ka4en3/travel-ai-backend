@@ -15,8 +15,9 @@ logger = logging.getLogger(__name__)
 class UserRepository(BaseRepository[User]):
     """
     Repository for the User model.
-    Provides methods for working with users.
     """
+
+    model = User
 
     def __init__(self, session: AsyncSession):
         """

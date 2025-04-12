@@ -1,6 +1,6 @@
 # app/schemas/user.py
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import datetime
 
@@ -13,6 +13,13 @@ class UserBase(BaseModel):
     language: Optional[str] = None
     is_premium: bool = False
     is_bot: bool = False
+
+    @field_validator("telegram_id")
+    @classmethod
+    def validate_telegram_id(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("Telegram ID must be a positive integer")
+        return value
 
 
 class UserCreate(UserBase):

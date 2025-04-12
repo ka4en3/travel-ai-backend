@@ -11,17 +11,19 @@ from models.mixins import CreatedAtMixin
 class AICache(CreatedAtMixin, Base):
     __tablename__ = "ai_cache"
 
-    cache_key: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    prompt_hash: Mapped[str | None] = mapped_column(nullable=True)
-    original_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # f"{origin}:{destination}:{duration_days}:{budget}"
+    cache_key: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
 
-    origin: Mapped[str | None] = mapped_column(String, index=True, nullable=True)
-    destination: Mapped[str | None] = mapped_column(String, index=True, nullable=True)
-    duration_days: Mapped[int | None] = mapped_column(nullable=True)
+    prompt_hash: Mapped[str] = mapped_column(nullable=False)  # SHA256 или MD5
+    original_prompt: Mapped[str] = mapped_column(Text, nullable=False)
+
+    origin: Mapped[str] = mapped_column(index=True, nullable=False)
+    destination: Mapped[str] = mapped_column(index=True, nullable=False)
+    duration_days: Mapped[int] = mapped_column(index=True, nullable=False)
+    budget: Mapped[float] = mapped_column(index=True, nullable=False)
     interests: Mapped[list[str]] = mapped_column(JSON, nullable=True)
-    budget: Mapped[float | None] = mapped_column(nullable=True)
 
-    result: Mapped[dict] = mapped_column(JSON, nullable=False)
+    result: Mapped[dict] = mapped_column(JSON, nullable=False, default=[])
 
     hit_count: Mapped[int] = mapped_column(nullable=False, default=1)
 

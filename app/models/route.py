@@ -12,25 +12,38 @@ from models.mixins import CreatedAtMixin
 class Route(CreatedAtMixin, Base):
     __tablename__ = "routes"
 
-    name: Mapped[str] = mapped_column(nullable=False, index=True)
-    share_code: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    name: Mapped[str] = mapped_column(nullable=False, index=True, default="New Route")
+    share_code: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
     is_public: Mapped[bool] = mapped_column(nullable=False, default=False)
 
-    origin: Mapped[str] = mapped_column(String, index=True, nullable=False)
-    destination: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    origin: Mapped[str] = mapped_column(index=True, nullable=False)
+    destination: Mapped[str] = mapped_column(index=True, nullable=False)
     duration_days: Mapped[int] = mapped_column(nullable=False)
-    interests: Mapped[list[str]] = mapped_column(JSON, nullable=True)  # Stored as a JSON array
+    interests: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=[])
     budget: Mapped[float] = mapped_column(nullable=False)
 
     # Route data - stores the actual AI-generated route
-    route_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    route_data: Mapped[dict] = mapped_column(JSON, nullable=False, default=[])
 
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    owner: Mapped["User"] = relationship(
+        back_populates="owned_routes",
+        foreign_keys=[owner_id],
+    )
+
+    ai_cache_id: Mapped[int | None] = mapped_column(
+        ForeignKey("ai_cache.id", ondelete="SET NULL"), nullable=True
+    )
+    ai_cache: Mapped["AICache"] = relationship(
+        back_populates="routes",
+    )
+
     last_edited_by: Mapped[int | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    ai_cache_id: Mapped[int | None] = mapped_column(
-        ForeignKey("ai_cache.id", ondelete="SET NULL"), nullable=True
+    last_editor: Mapped["User"] = relationship(
+        back_populates="last_edited_routes",
+        foreign_keys=[last_edited_by],
     )
 
     updated_at: Mapped[datetime] = mapped_column(
@@ -40,10 +53,6 @@ class Route(CreatedAtMixin, Base):
         onupdate=func.now(),
     )
 
-    owner: Mapped["User"] = relationship(
-        back_populates="owned_routes",
-        foreign_keys=[owner_id],
-    )
     access_list: Mapped[list["RouteAccess"]] = relationship(
         back_populates="route",
         cascade="all, delete-orphan",
@@ -52,9 +61,7 @@ class Route(CreatedAtMixin, Base):
         back_populates="route",
         cascade="all, delete-orphan",
     )
-    ai_cache: Mapped["AICache"] = relationship(
-        back_populates="routes",
-    )
+
     exports: Mapped[list["Export"]] = relationship(
         back_populates="route",
         cascade="all, delete-orphan",

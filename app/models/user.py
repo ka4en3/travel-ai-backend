@@ -30,6 +30,11 @@ class User(CreatedAtMixin, Base):
         cascade="all, delete-orphan",
     )
 
+    last_edited_routes: Mapped[list["Route"]] = relationship(
+        back_populates="last_editor",
+        foreign_keys="Route.last_edited_by",
+    )
+
     ai_cache_entries: Mapped[list["AICache"]] = relationship(
         back_populates="user",
     )
