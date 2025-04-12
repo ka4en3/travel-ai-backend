@@ -8,9 +8,9 @@ from datetime import datetime
 class UserBase(BaseModel):
     telegram_id: int
     username: Optional[str] = None
-    first_name: str
+    first_name: Optional[str] = None
     last_name: Optional[str] = None
-    language: Optional[str] = "en"
+    language: Optional[str] = None
     is_premium: bool = False
     is_bot: bool = False
 
@@ -30,6 +30,7 @@ class UserRead(UserBase):
 
 class UserShort(BaseModel):
     id: int
+    telegram_id: int
     first_name: str
 
     class Config:

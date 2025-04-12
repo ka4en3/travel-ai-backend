@@ -10,7 +10,7 @@ from sqlalchemy.engine import Connection
 from alembic import context
 
 # import settings and metadata
-from core.config import settings
+from utils.config import settings
 from db.base import Base
 
 # this is the Alembic Config object, which provides

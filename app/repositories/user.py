@@ -1,20 +1,13 @@
 # app/repositories/user.py
 
-
-# @router.post("/users")
-# async def register_user(data: UserCreate, session: AsyncSession = Depends(get_session)):
-#     repo = UserRepository(session)
-#     return await repo.create(data)
-
-
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from app.models.user import User
-from app.schemas.user import UserCreate
-from app.repositories.base import BaseRepository
+from models.user import User
+from schemas.user import UserCreate
+from repositories.base import BaseRepository
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +28,13 @@ class UserRepository(BaseRepository[User]):
         """Get user by telegram_id"""
         logger.debug(f"Fetching User with telegram_id={telegram_id}")
         stmt = select(User).where(User.telegram_id == telegram_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_by_username(self, username: str) -> User | None:
+        """Get user by username"""
+        logger.debug(f"Fetching User with username={username}")
+        stmt = select(User).where(User.username == username)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 

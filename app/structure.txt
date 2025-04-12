@@ -22,7 +22,7 @@ travel-ai-backend/			 	 # FastAPI backend service
 │   ├── api/                     # HTTP endpoints
 │   │   └── routes.py            # API routes (plan, edit, export, etc.)
 │   │
-│   ├── core/                    # Core config and logging
+│   ├── utils/                    # Core config and logging
 │   │   ├── config.py            # App settings via Pydantic
 │   │   └── logging.py           # Logger setup
 │   │

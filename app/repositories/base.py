@@ -4,7 +4,7 @@ import logging
 from typing import Generic, TypeVar, Type
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.db.base_class import Base
+from db.base_class import Base
 
 logger = logging.getLogger(__name__)
 

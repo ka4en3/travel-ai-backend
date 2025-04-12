@@ -11,9 +11,7 @@ from models.mixins import CreatedAtMixin
 class AICache(CreatedAtMixin, Base):
     __tablename__ = "ai_cache"
 
-    cache_key: Mapped[str] = mapped_column(
-        String, unique=True, index=True, nullable=False
-    )
+    cache_key: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     prompt_hash: Mapped[str | None] = mapped_column(nullable=True)
     original_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -29,13 +27,9 @@ class AICache(CreatedAtMixin, Base):
 
     source: Mapped[str] = mapped_column(nullable=False, default="bot")
 
-    expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    user_id: Mapped[int | None] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
-    )
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     user: Mapped["User"] = relationship(
         back_populates="ai_cache_entries",
     )

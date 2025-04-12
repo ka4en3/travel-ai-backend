@@ -5,7 +5,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import declared_attr
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
-from core.config import convention
+from utils.config import convention
 
 
 class Base(DeclarativeBase):

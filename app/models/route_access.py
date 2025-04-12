@@ -16,15 +16,9 @@ class RouteRole(Enum):
 class RouteAccess(Base):
     __tablename__ = "route_access"
 
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL"), nullable=False
-    )
-    route_id: Mapped[int] = mapped_column(
-        ForeignKey("routes.id", ondelete="CASCADE"), nullable=False
-    )
-    role: Mapped[RouteRole] = mapped_column(
-        PgEnum(RouteRole), nullable=False, default=RouteRole.VIEWER
-    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=False)
+    route_id: Mapped[int] = mapped_column(ForeignKey("routes.id", ondelete="CASCADE"), nullable=False)
+    role: Mapped[RouteRole] = mapped_column(PgEnum(RouteRole), nullable=False, default=RouteRole.VIEWER)
 
     user: Mapped["User"] = relationship(
         back_populates="route_access",

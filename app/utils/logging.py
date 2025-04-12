@@ -32,7 +32,7 @@ def setup_logging():
                 "propagate": False,
             },
             "sqlalchemy.engine": {
-                "level": "WARNING",  # INFO or DEBUG to see SQL
+                "level": "INFO",  # INFO or DEBUG to see SQL
             },
         },
     })

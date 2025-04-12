@@ -1,19 +1,20 @@
 # app/models/__init__.py
 
-# from models.user import User
-# from models.route import Route, RouteDay, Activity
-# from models.export import Export, ExportType
-# from models.ai_cache import AICache
-# from models.route_access import RouteAccess, RouteRole
+from .user import User
+from .route import Route, RouteDay, Activity
+from .export import Export, ExportType
+from .ai_cache import AICache
+from .route_access import RouteAccess, RouteRole
 
 
-# __all__ = [
-#     "User",
-#     "Route",
-#     "RouteDay",
-#     "Activity",
-#     "Export",
-#     "ExportType",
-#     "AICache",
-#     "RouteAccess",
-# ]
+__all__ = [
+    "User",
+    "Route",
+    "RouteDay",
+    "Activity",
+    "Export",
+    "ExportType",
+    "AICache",
+    "RouteAccess",
+    "RouteRole",
+]
