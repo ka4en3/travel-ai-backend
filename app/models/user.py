@@ -26,7 +26,7 @@ class User(CreatedAtMixin, Base):
 
     owned_routes: Mapped[list["Route"]] = relationship(
         back_populates="owner",
-        foreign_keys=lambda: Route.owner_id,
+        foreign_keys="Route.owner_id",
         cascade="all, delete-orphan",
     )
 
