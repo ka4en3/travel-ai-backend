@@ -14,7 +14,7 @@ class RouteAccessBase(BaseModel):
 class RouteAccessCreate(RouteAccessBase):
     @field_validator("user_id", "route_id")
     @classmethod
-    def validate_budget(cls, value: int) -> int:
+    def validate_ids(cls, value: int) -> int:
         if value <= 0:
             raise ValueError("ID must be a positive integer")
         return value

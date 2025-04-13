@@ -47,41 +47,27 @@ class RouteRepository(BaseRepository[Route]):
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def create(self, obj_in: RouteCreate) -> Route:
+    async def create(self, obj_in: RouteCreate, commit: bool = True) -> Route:
         """
         Create a new route from the provided dictionary.
         """
-        new_route = Route(**obj_in.model_dump(exclude={"route_days"}))
+        new_route = Route(**obj_in.model_dump(exclude={"days"}))
         self.session.add(new_route)
-        await self.session.commit()
-        await self.session.refresh(new_route)
+        await self.session.flush()
+        if commit:
+            await self.session.commit()
+            await self.session.refresh(new_route)
         logger.info("Created new route with id=%s", new_route.id)
         return new_route
-
-    # async def update(self, _id: int, obj_in: RouteUpdate) -> Optional[Route]:
-    #     """
-    #     Update an existing route with given updates.
-    #     """
-    #     existing = await self.get(_id)
-    #     if not existing:
-    #         logger.warning(f"Route with id={_id} not found for update")
-    #         return None
-    #
-    #     data = obj_in.model_dump(exclude_unset=True)
-    #     for field, value in data.items():
-    #         setattr(existing, field, value)
-    #
-    #     await self.session.commit()
-    #     await self.session.refresh(existing)
-    #     logger.info(f"Updated Route with id={_id}")
-    #     return existing
 
     # ================= ROUTE DAY ================= #
 
     async def create_day(self, route_id: int, day_data: RouteDayCreate) -> RouteDay:
         route = await self.get(route_id)
         if not route:
-            raise ValueError(f"Route {route_id} not found")
+            message = f"Route {route_id} not found"
+            logger.warning(message)
+            raise ValueError(message)
 
         new_day = RouteDay(route_id=route_id, **day_data.model_dump(exclude={"activities"}))
         self.session.add(new_day)
@@ -110,7 +96,7 @@ class RouteRepository(BaseRepository[Route]):
 
     async def delete_day(self, day_id: int) -> bool:
         """
-        Delete a RouteDay by its ID.
+        Delete a RouteDay by ID.
         """
         stmt = select(RouteDay).where(RouteDay.id == day_id)
         result = await self.session.execute(stmt)

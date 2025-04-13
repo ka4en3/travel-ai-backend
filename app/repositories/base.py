@@ -41,14 +41,11 @@ class BaseRepository(Generic[ModelType]):
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def delete(self, id: int) -> bool:
+    async def delete(self, id: int, commit: bool = True):
         """Delete object by ID"""
         logger.info(f"Attempting to delete {self.model.__name__} with id={id}")
         obj = await self.get(id)
-        if not obj:
-            logger.warning(f"{self.model.__name__} with id={id} not found")
-            return False
         await self.session.delete(obj)
-        await self.session.commit()
+        if commit:
+            await self.session.commit()
         logger.info(f"{self.model.__name__} with id={id} deleted")
-        return True

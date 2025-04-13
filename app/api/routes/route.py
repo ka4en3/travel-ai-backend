@@ -7,7 +7,11 @@ from typing import List
 from db.sessions import get_session
 from schemas.route import RouteRead, RouteCreate, RouteShort
 from services.route_service import RouteService
-from exceptions.route import RouteAlreadyExistsError, RouteNotFoundError
+from exceptions.route import (
+    RouteAlreadyExistsError,
+    RouteNotFoundError,
+    InvalidRouteDataError,
+)
 
 import logging
 
@@ -69,6 +73,9 @@ async def create_route(route_in: RouteCreate, service: RouteService = Depends(ge
     except RouteAlreadyExistsError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=409, detail=e.message)
+    except InvalidRouteDataError as e:
+        logger.warning(str(e))
+        raise HTTPException(status_code=422, detail=e.message)
 
 
 @router.put("/{id}", response_model=RouteRead)
@@ -84,6 +91,9 @@ async def rebuild_route(id: int, route_in: RouteCreate, service: RouteService = 
     except RouteAlreadyExistsError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=409, detail=e.message)
+    except InvalidRouteDataError as e:
+        logger.warning(str(e))
+        raise HTTPException(status_code=422, detail=e.message)
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -1,3 +1,10 @@
+1. all fields to route schema
+2. Route.share_code -> remove trailing spaces
+3. user_id -> telegram_id
+4. add route_access
+5. AICache CRUD
+
+
 alembic revision --autogenerate -m "Initial migration"
 
 alembic upgrade head --sql > migration.sql
