@@ -2,7 +2,7 @@
 
 from sqlalchemy import select, delete
 from models.route import Route, RouteDay, Activity
-from schemas.route import RouteCreate, RouteUpdate, RouteDayCreate, ActivityCreate
+from schemas.route import RouteCreate, RouteDayCreate
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from typing import Optional, List
@@ -24,7 +24,7 @@ class RouteRepository(BaseRepository[Route]):
 
     async def get(self, id: int) -> Optional[Route]:
         """Get route by ID"""
-        logger.debug("Fetching route by Id=%s", id)
+        logger.info("Fetching route by Id=%s", id)
         stmt = select(Route).where(Route.id == id).options(selectinload(Route.days))
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
@@ -33,7 +33,7 @@ class RouteRepository(BaseRepository[Route]):
         """
         Get route by its unique share code.
         """
-        logger.debug("Fetching route by share_code=%s", share_code)
+        logger.info("Fetching route by share_code=%s", share_code)
         stmt = select(Route).where(Route.share_code == share_code).options(selectinload(Route.days))
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
@@ -42,7 +42,7 @@ class RouteRepository(BaseRepository[Route]):
         """
         Get all routes created by a specific user.
         """
-        logger.debug("Fetching all routes for owner_id=%s", owner_id)
+        logger.info("Fetching all routes for owner_id=%s", owner_id)
         stmt = select(Route).where(Route.owner_id == owner_id).options(selectinload(Route.days))
         result = await self.session.execute(stmt)
         return result.scalars().all()
@@ -51,30 +51,30 @@ class RouteRepository(BaseRepository[Route]):
         """
         Create a new route from the provided dictionary.
         """
-        new_route = Route(**obj_in.model_dump())
+        new_route = Route(**obj_in.model_dump(exclude={"route_days"}))
         self.session.add(new_route)
         await self.session.commit()
-        # await self.session.refresh(new_route)
+        await self.session.refresh(new_route)
         logger.info("Created new route with id=%s", new_route.id)
         return new_route
 
-    async def update(self, _id: int, obj_in: RouteUpdate) -> Optional[Route]:
-        """
-        Update an existing route with given updates.
-        """
-        existing = await self.get(_id)
-        if not existing:
-            logger.warning(f"Route with id={_id} not found for update")
-            return None
-
-        data = obj_in.model_dump(exclude_unset=True)
-        for field, value in data.items():
-            setattr(existing, field, value)
-
-        await self.session.commit()
-        await self.session.refresh(existing)
-        logger.info(f"Updated Route with id={_id}")
-        return existing
+    # async def update(self, _id: int, obj_in: RouteUpdate) -> Optional[Route]:
+    #     """
+    #     Update an existing route with given updates.
+    #     """
+    #     existing = await self.get(_id)
+    #     if not existing:
+    #         logger.warning(f"Route with id={_id} not found for update")
+    #         return None
+    #
+    #     data = obj_in.model_dump(exclude_unset=True)
+    #     for field, value in data.items():
+    #         setattr(existing, field, value)
+    #
+    #     await self.session.commit()
+    #     await self.session.refresh(existing)
+    #     logger.info(f"Updated Route with id={_id}")
+    #     return existing
 
     # ================= ROUTE DAY ================= #
 

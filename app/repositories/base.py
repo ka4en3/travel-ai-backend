@@ -29,14 +29,14 @@ class BaseRepository(Generic[ModelType]):
 
     async def get(self, id: int) -> ModelType | None:
         """Get object by ID"""
-        logger.debug(f"Fetching {self.model.__name__} with id={id}")
+        logger.info(f"Fetching {self.model.__name__} with id={id}")
         stmt = select(self.model).where(self.model.id == id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def get_all(self) -> list[ModelType]:
         """Get all objects in the model"""
-        logger.debug(f"Fetching all records of {self.model.__name__}")
+        logger.info(f"Fetching all records of {self.model.__name__}")
         stmt = select(self.model)
         result = await self.session.execute(stmt)
         return result.scalars().all()

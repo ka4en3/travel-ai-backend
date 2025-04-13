@@ -27,14 +27,14 @@ class UserRepository(BaseRepository[User]):
 
     async def get_by_telegram_id(self, telegram_id: int) -> User | None:
         """Get user by telegram_id"""
-        logger.debug(f"Fetching User with telegram_id={telegram_id}")
+        logger.info(f"Fetching User with telegram_id={telegram_id}")
         stmt = select(User).where(User.telegram_id == telegram_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def get_by_username(self, username: str) -> User | None:
         """Get user by username"""
-        logger.debug(f"Fetching User with username={username}")
+        logger.info(f"Fetching User with username={username}")
         stmt = select(User).where(User.username == username)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
