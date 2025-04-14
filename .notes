@@ -7,7 +7,7 @@
 
 
 alembic revision --autogenerate -m "Initial migration"
-
+alembic upgrade head -v
 alembic upgrade head --sql > migration.sql
 
 uv sync --extra dev
@@ -17,6 +17,15 @@ docker-compose up --build -d
 
 docker-compose logs api
 docker-compose logs -f api
+
+Check PostgreSQL logs: Access the logs from your PostgreSQL container:
+docker logs pg
+
+Direct container access: Connect to the PostgreSQL container directly to eliminate any host connectivity issues:
+docker exec -it pg psql -U admin -d travel_ai_db
+Then check for tables:
+\dt
+
 
 
 🔹 1. ✅ Первичная Alembic миграция
@@ -45,9 +54,6 @@ route_service.py: сохранение / обновление / экспорт
 /ai/generate
 /routes
 /routes/{id}/export
-
-
-
 
 
 
