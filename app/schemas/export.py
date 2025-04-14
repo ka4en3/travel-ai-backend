@@ -13,7 +13,7 @@ class ExportBase(BaseModel):
     export_type: ExportType
 
 
-class ExportCreate(BaseModel):
+class ExportCreate(ExportBase):
     @field_validator("route_id", "user_id")
     @classmethod
     def validate_positive_id(cls, v):

@@ -3,7 +3,8 @@
 from pydantic import BaseModel, field_validator
 from typing import Optional, List
 from datetime import datetime
-
+from .route_access import RouteAccessCreate, RouteAccessRead
+from .export import ExportCreate, ExportRead
 
 # ================= ACTIVITY ================= #
 
@@ -76,20 +77,23 @@ class RouteDayRead(RouteDayBase):
 
 class RouteBase(BaseModel):
     name: str = "New Route"
+    share_code: str
     origin: str
     destination: str
     duration_days: int
     budget: float
-    owner_id: int
-    route_data: dict
-    share_code: str
     interests: List[str] = []
+    route_data: dict
+    owner_id: int
     ai_cache_id: Optional[int] = None
     last_edited_by: Optional[int] = None
+    is_public: bool = False
 
 
 class RouteCreate(RouteBase):
     days: List[RouteDayCreate] = []
+    access_list: List[RouteAccessCreate] = []
+    exports: List[ExportCreate] = []
 
     @field_validator("origin", "destination")
     @classmethod
@@ -124,6 +128,8 @@ class RouteRead(RouteBase):
     id: int
     name: str
     days: List[RouteDayRead] = []
+    access_list: List[RouteAccessRead] = []
+    exports: List[ExportRead] = []
     created_at: datetime
     updated_at: datetime
 

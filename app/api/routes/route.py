@@ -44,7 +44,9 @@ async def get_route(id: int, service: RouteService = Depends(get_route_service))
 
 
 @router.get("/by_code/{share_code}", response_model=RouteRead)
-async def get_route_by_code(share_code: str, service: RouteService = Depends(get_route_service)):
+async def get_route_by_code(
+    share_code: str, service: RouteService = Depends(get_route_service)
+):
     """
     Get route by share_code.
     """
@@ -56,15 +58,19 @@ async def get_route_by_code(share_code: str, service: RouteService = Depends(get
 
 
 @router.get("/by_owner/{owner_id}", response_model=List[RouteRead])
-async def get_routes_by_owner(owner_id: int, service: RouteService = Depends(get_route_service)):
+async def get_routes_by_owner(
+    owner_id: int, service: RouteService = Depends(get_route_service)
+):
     """
     Get all routes owned by a specific user.
     """
     return await service.get_route_by_owner(owner_id)
 
 
-@router.post("/", response_model=RouteRead, status_code=status.HTTP_201_CREATED)
-async def create_route(route_in: RouteCreate, service: RouteService = Depends(get_route_service)):
+@router.post("/", response_model=RouteShort, status_code=status.HTTP_201_CREATED)
+async def create_route(
+    route_in: RouteCreate, service: RouteService = Depends(get_route_service)
+):
     """
     Create a new travel route.
     """
@@ -78,8 +84,10 @@ async def create_route(route_in: RouteCreate, service: RouteService = Depends(ge
         raise HTTPException(status_code=422, detail=e.message)
 
 
-@router.put("/{id}", response_model=RouteRead)
-async def rebuild_route(id: int, route_in: RouteCreate, service: RouteService = Depends(get_route_service)):
+@router.put("/{id}", response_model=RouteShort)
+async def rebuild_route(
+    id: int, route_in: RouteCreate, service: RouteService = Depends(get_route_service)
+):
     """
     Rebuild an existing route by ID (delete + create new).
     """

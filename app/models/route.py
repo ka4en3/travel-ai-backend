@@ -19,13 +19,15 @@ class Route(CreatedAtMixin, Base):
     origin: Mapped[str] = mapped_column(index=True, nullable=False)
     destination: Mapped[str] = mapped_column(index=True, nullable=False)
     duration_days: Mapped[int] = mapped_column(nullable=False)
-    interests: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=[])
     budget: Mapped[float] = mapped_column(nullable=False)
+    interests: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=[])
 
     # Route data - stores the actual AI-generated route
     route_data: Mapped[dict] = mapped_column(JSON, nullable=False, default=[])
 
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    owner_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     owner: Mapped["User"] = relationship(
         back_populates="owned_routes",
         foreign_keys=[owner_id],
@@ -74,7 +76,9 @@ class Route(CreatedAtMixin, Base):
 class RouteDay(Base):
     __tablename__ = "route_days"
 
-    route_id: Mapped[int] = mapped_column(ForeignKey("routes.id", ondelete="CASCADE"), nullable=False)
+    route_id: Mapped[int] = mapped_column(
+        ForeignKey("routes.id", ondelete="CASCADE"), nullable=False
+    )
     day_number: Mapped[int] = mapped_column(nullable=False)
     description: Mapped[str | None] = mapped_column(nullable=True)
     date: Mapped[datetime | None] = mapped_column(nullable=True)
@@ -94,7 +98,9 @@ class RouteDay(Base):
 class Activity(Base):
     __tablename__ = "activities"
 
-    day_id: Mapped[int] = mapped_column(ForeignKey("route_days.id", ondelete="CASCADE"), nullable=False)
+    day_id: Mapped[int] = mapped_column(
+        ForeignKey("route_days.id", ondelete="CASCADE"), nullable=False
+    )
     name: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str | None] = mapped_column(nullable=True)
     start_time: Mapped[str | None] = mapped_column(nullable=True)  # Format: "HH:MM"

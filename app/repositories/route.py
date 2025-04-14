@@ -25,7 +25,13 @@ class RouteRepository(BaseRepository[Route]):
     async def get(self, id: int) -> Optional[Route]:
         """Get route by ID"""
         logger.info("Fetching route by Id=%s", id)
-        stmt = select(Route).where(Route.id == id).options(selectinload(Route.days))
+        stmt = (
+            select(Route)
+            .where(Route.id == id)
+            .options(selectinload(Route.days))
+            .options(selectinload(Route.access_list))
+            .options(selectinload(Route.exports))
+        )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -34,7 +40,13 @@ class RouteRepository(BaseRepository[Route]):
         Get route by its unique share code.
         """
         logger.info("Fetching route by share_code=%s", share_code)
-        stmt = select(Route).where(Route.share_code == share_code).options(selectinload(Route.days))
+        stmt = (
+            select(Route)
+            .where(Route.share_code == share_code)
+            .options(selectinload(Route.days))
+            .options(selectinload(Route.access_list))
+            .options(selectinload(Route.exports))
+        )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -43,7 +55,13 @@ class RouteRepository(BaseRepository[Route]):
         Get all routes created by a specific user.
         """
         logger.info("Fetching all routes for owner_id=%s", owner_id)
-        stmt = select(Route).where(Route.owner_id == owner_id).options(selectinload(Route.days))
+        stmt = (
+            select(Route)
+            .where(Route.owner_id == owner_id)
+            .options(selectinload(Route.days))
+            .options(selectinload(Route.access_list))
+            .options(selectinload(Route.exports))
+        )
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
@@ -69,7 +87,9 @@ class RouteRepository(BaseRepository[Route]):
             logger.warning(message)
             raise ValueError(message)
 
-        new_day = RouteDay(route_id=route_id, **day_data.model_dump(exclude={"activities"}))
+        new_day = RouteDay(
+            route_id=route_id, **day_data.model_dump(exclude={"activities"})
+        )
         self.session.add(new_day)
         await self.session.flush()  # flush to get day.id
 
@@ -87,7 +107,9 @@ class RouteRepository(BaseRepository[Route]):
         Get all RouteDay entries for a given route with activities.
         """
         stmt = (
-            select(RouteDay).where(RouteDay.route_id == route_id).options(selectinload(RouteDay.activities))
+            select(RouteDay)
+            .where(RouteDay.route_id == route_id)
+            .options(selectinload(RouteDay.activities))
         )
         result = await self.session.execute(stmt)
         days = result.scalars().all()

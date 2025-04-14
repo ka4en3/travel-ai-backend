@@ -26,7 +26,7 @@ class RouteService:
         self.session = session
         self.repo = RouteRepository(session)
 
-    async def create_route(self, new_data: RouteCreate) -> RouteRead:
+    async def create_route(self, new_data: RouteCreate) -> RouteShort:
         """
         Create a new Route and optionally RouteDays and Activities.
         Performs FK checks on owner_id, ai_cache_id, and last_edited_by (if provided).
@@ -109,7 +109,9 @@ class RouteService:
         await self.repo.delete(route_id)
         return True
 
-    async def rebuild_route(self, old_route_id: int, new_data: RouteCreate) -> RouteRead:
+    async def rebuild_route(
+        self, old_route_id: int, new_data: RouteCreate
+    ) -> RouteShort:
         """
         Atomically replace an existing route with a new one.
         """
