@@ -1,8 +1,9 @@
 # app/models/route.py
 
-from datetime import datetime
+from datetime import datetime, date
+from sqlalchemy import Date
 from typing import List
-from sqlalchemy import ForeignKey, String, Integer, DateTime, JSON, Table, func
+from sqlalchemy import ForeignKey, String, Integer, DateTime, JSON, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.base_class import Base
@@ -81,7 +82,7 @@ class RouteDay(Base):
     )
     day_number: Mapped[int] = mapped_column(nullable=False)
     description: Mapped[str | None] = mapped_column(nullable=True)
-    date: Mapped[datetime | None] = mapped_column(nullable=True)
+    date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     route: Mapped["Route"] = relationship(
         back_populates="days",

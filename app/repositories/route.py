@@ -28,12 +28,19 @@ class RouteRepository(BaseRepository[Route]):
         stmt = (
             select(Route)
             .where(Route.id == id)
-            .options(selectinload(Route.days))
-            .options(selectinload(Route.access_list))
-            .options(selectinload(Route.exports))
+            .options(
+                selectinload(Route.days).selectinload(RouteDay.activities),
+                selectinload(Route.access_list),
+                selectinload(Route.exports),
+            )
         )
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        route = result.scalar_one_or_none()
+
+        if route is None:
+            logger.warning("Route with Id=%s not found", id)
+
+        return route
 
     async def get_by_share_code(self, share_code: str) -> Optional[Route]:
         """
@@ -43,12 +50,19 @@ class RouteRepository(BaseRepository[Route]):
         stmt = (
             select(Route)
             .where(Route.share_code == share_code)
-            .options(selectinload(Route.days))
-            .options(selectinload(Route.access_list))
-            .options(selectinload(Route.exports))
+            .options(
+                selectinload(Route.days).selectinload(RouteDay.activities),
+                selectinload(Route.access_list),
+                selectinload(Route.exports),
+            )
         )
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        route = result.scalar_one_or_none()
+
+        if route is None:
+            logger.warning("Route with code=%s not found", share_code)
+
+        return route
 
     async def get_by_owner_id(self, owner_id: int) -> list[Route]:
         """
@@ -58,9 +72,11 @@ class RouteRepository(BaseRepository[Route]):
         stmt = (
             select(Route)
             .where(Route.owner_id == owner_id)
-            .options(selectinload(Route.days))
-            .options(selectinload(Route.access_list))
-            .options(selectinload(Route.exports))
+            .options(
+                selectinload(Route.days).selectinload(RouteDay.activities),
+                selectinload(Route.access_list),
+                selectinload(Route.exports),
+            )
         )
         result = await self.session.execute(stmt)
         return result.scalars().all()

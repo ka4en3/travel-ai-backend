@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, field_validator
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
 from .route_access import RouteAccessCreate, RouteAccessRead
 from .export import ExportCreate, ExportRead
 
@@ -49,11 +49,12 @@ class ActivityRead(ActivityBase):
 
 class RouteDayBase(BaseModel):
     day_number: int
+    date: Optional[date]
     description: Optional[str] = None
-    date: Optional[datetime] = None
 
 
 class RouteDayCreate(RouteDayBase):
+    # date: Optional[date] = None
     activities: List[ActivityCreate] = []
 
     @field_validator("day_number")
@@ -63,9 +64,17 @@ class RouteDayCreate(RouteDayBase):
             raise ValueError("Day number must be greater than zero")
         return value
 
+    # @field_validator("date")
+    # @classmethod
+    # def remove_tzinfo(cls, v: Optional[datetime]) -> Optional[datetime]:
+    #     if v is not None and v.tzinfo is not None:
+    #         return v.replace(tzinfo=None)
+    #     return v
+
 
 class RouteDayRead(RouteDayBase):
     id: int
+    # date: Optional[date]
     activities: List[ActivityRead] = []
 
     class Config:
