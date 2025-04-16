@@ -31,10 +31,12 @@ class RouteService:
         Create a new Route and optionally RouteDays and Activities.
         Performs FK checks on owner_id, ai_cache_id, and last_edited_by (if provided).
         """
-        logger.info("Creating new route with share_code=%s", new_data.share_code)
+        share_code = new_data.share_code.strip()
 
-        if await self.repo.get_by_share_code(new_data.share_code):
-            message = f"Route with code '{new_data.share_code}' already exists"
+        logger.info("Creating new route with share_code=%s", share_code)
+
+        if await self.repo.get_by_share_code(share_code):
+            message = f"Route with code '{share_code}' already exists"
             logger.warning(message)
             raise RouteAlreadyExistsError(message)
 
@@ -72,16 +74,18 @@ class RouteService:
             raise RouteNotFoundError(message)
         return route
 
-    async def get_route_by_code(self, code: str) -> Optional[RouteRead]:
+    async def get_route_by_code(self, share_code: str) -> Optional[RouteRead]:
         """
         Get a route by its share_code.
         Raises:
             RouteNotFoundError: If route does not exist.
         """
-        logger.info("Getting route by share_code: %s", code)
-        route = await self.repo.get_by_share_code(code)
+        share_code = share_code.strip()
+
+        logger.info("Getting route by share_code: %s", share_code)
+        route = await self.repo.get_by_share_code(share_code)
         if not route:
-            message = f"Route with code '{code}' not found"
+            message = f"Route with code '{share_code}' not found"
             logger.warning(message)
             raise RouteNotFoundError(message)
         return route
@@ -115,6 +119,8 @@ class RouteService:
         """
         Atomically replace an existing route with a new one.
         """
+        share_code = new_data.share_code.strip()
+
         logger.info("Rebuilding route with id=%s", old_route_id)
 
         # async with self.session.begin():  # open transaction
@@ -126,9 +132,9 @@ class RouteService:
             raise RouteNotFoundError(message)
 
         # check if share_code already exists
-        existing_code = await self.repo.get_by_share_code(new_data.share_code)
+        existing_code = await self.repo.get_by_share_code(share_code)
         if existing_code and existing_code.id != old_route_id:
-            message = f"Route with code '{new_data.share_code}' already exists"
+            message = f"Route with code '{share_code}' already exists"
             logger.warning(message)
             raise RouteAlreadyExistsError(message)
         # check foreign keys
