@@ -64,13 +64,6 @@ class RouteDayCreate(RouteDayBase):
             raise ValueError("Day number must be greater than zero")
         return value
 
-    # @field_validator("date")
-    # @classmethod
-    # def remove_tzinfo(cls, v: Optional[datetime]) -> Optional[datetime]:
-    #     if v is not None and v.tzinfo is not None:
-    #         return v.replace(tzinfo=None)
-    #     return v
-
 
 class RouteDayRead(RouteDayBase):
     id: int

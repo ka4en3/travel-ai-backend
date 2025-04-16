@@ -23,7 +23,7 @@ class UserService:
     async def create_user(self, user_in: UserCreate) -> UserRead:
         existing = await self.repo.get_by_telegram_id(user_in.telegram_id)
         if existing:
-            logger.info("User already exists: telegram_id=%s", user_in.telegram_id)
+            logger.warning("User already exists: telegram_id=%s", user_in.telegram_id)
             raise UserAlreadyExistsError(user_in.telegram_id)
         user = await self.repo.create(user_in)
         logger.info("User created with id=%s", user.id)

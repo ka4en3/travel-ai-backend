@@ -29,23 +29,25 @@ class BaseRepository(Generic[ModelType]):
 
     async def get(self, id: int) -> ModelType | None:
         """Get object by ID"""
-        logger.info(f"Fetching {self.model.__name__} with id={id}")
+        logger.debug(f"Base Repo: fetching {self.model.__name__} with id={id}")
         stmt = select(self.model).where(self.model.id == id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def get_all(self) -> list[ModelType]:
         """Get all objects in the model"""
-        logger.info(f"Fetching all records of {self.model.__name__}")
+        logger.debug(f"Base Repo: fetching all records of {self.model.__name__}")
         stmt = select(self.model)
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
     async def delete(self, id: int, commit: bool = True):
         """Delete object by ID"""
-        logger.info(f"Attempting to delete {self.model.__name__} with id={id}")
+        logger.debug(
+            f"Base Repo: attempting to delete {self.model.__name__} with id={id}"
+        )
         obj = await self.get(id)
         await self.session.delete(obj)
         if commit:
             await self.session.commit()
-        logger.info(f"{self.model.__name__} with id={id} deleted")
+        logger.debug(f"{self.model.__name__} with id={id} deleted")

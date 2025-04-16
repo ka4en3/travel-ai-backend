@@ -1,4 +1,4 @@
-# app/core/logging_middleware.py
+# app/utils/logging_middleware.py
 
 import logging
 from fastapi import Request

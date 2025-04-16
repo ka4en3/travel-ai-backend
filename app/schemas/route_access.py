@@ -8,7 +8,7 @@ from models.route_access import RouteRole
 class RouteAccessBase(BaseModel):
     user_id: int
     route_id: int
-    role: RouteRole
+    role: RouteRole = RouteRole.VIEWER
 
 
 class RouteAccessCreate(RouteAccessBase):

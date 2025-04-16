@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from models.ai_cache import AICache
-from db.base_class import Base
 from .base import BaseRepository
 
 logger = logging.getLogger(__name__)
@@ -26,7 +25,7 @@ class AICacheRepository(BaseRepository[AICache]):
         """
         Get a single AICache entry by its ID.
         """
-        logger.debug("Fetching AICache by id=%s", id)
+        logger.debug("AICache Repo: Fetching AICache by id=%s", id)
         stmt = select(AICache).where(AICache.id == id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
@@ -35,7 +34,7 @@ class AICacheRepository(BaseRepository[AICache]):
         """
         Get an AICache entry by prompt hash (used for caching).
         """
-        logger.debug("Fetching AICache by prompt_hash=%s", prompt_hash)
+        logger.debug("AICache Repo: Fetching AICache by prompt_hash=%s", prompt_hash)
         stmt = select(AICache).where(AICache.prompt_hash == prompt_hash)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()

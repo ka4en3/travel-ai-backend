@@ -1,4 +1,3 @@
-3. user_id -> telegram_id
 4. add route_access
 5. AICache CRUD
 6. Migration: add remove Data types

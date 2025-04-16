@@ -1,4 +1,4 @@
-# app/core/config.py
+# app/utils/config.py
 
 from pydantic import Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings
@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     # API settings
     API_HOST: str = Field(default="0.0.0.0")
     API_PORT: int = Field(default=8000, ge=1, le=65535)
+
+    # DEBUG
+    DEBUG: bool = False
 
     class Config:
         env_file = os.getenv("ENV_FILE", ".env")

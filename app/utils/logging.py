@@ -1,4 +1,4 @@
-# app/core/logging.py
+# app/utils/logging.py
 
 from logging.config import dictConfig
 

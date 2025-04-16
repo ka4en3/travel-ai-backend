@@ -1,6 +1,8 @@
 # app/repositories/route.py
 
 from sqlalchemy import select, delete
+from sqlalchemy.exc import IntegrityError
+
 from models.route import Route, RouteDay, Activity
 from schemas.route import RouteCreate, RouteDayCreate
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +26,7 @@ class RouteRepository(BaseRepository[Route]):
 
     async def get(self, id: int) -> Optional[Route]:
         """Get route by ID"""
-        logger.info("Fetching route by Id=%s", id)
+        logger.debug("Route Repo: Fetching Route by Id=%s", id)
         stmt = (
             select(Route)
             .where(Route.id == id)
@@ -38,7 +40,7 @@ class RouteRepository(BaseRepository[Route]):
         route = result.scalar_one_or_none()
 
         if route is None:
-            logger.warning("Route with Id=%s not found", id)
+            logger.debug("Route Repo: Route with Id=%s not found", id)
 
         return route
 
@@ -46,7 +48,7 @@ class RouteRepository(BaseRepository[Route]):
         """
         Get route by its unique share code.
         """
-        logger.info("Fetching route by share_code=%s", share_code)
+        logger.debug("Route Repo: Fetching Route by share_code=%s", share_code)
         stmt = (
             select(Route)
             .where(Route.share_code == share_code)
@@ -60,7 +62,7 @@ class RouteRepository(BaseRepository[Route]):
         route = result.scalar_one_or_none()
 
         if route is None:
-            logger.warning("Route with code=%s not found", share_code)
+            logger.debug("Route Repo: Route with code=%s not found", share_code)
 
         return route
 
@@ -68,7 +70,7 @@ class RouteRepository(BaseRepository[Route]):
         """
         Get all routes created by a specific user.
         """
-        logger.info("Fetching all routes for owner_id=%s", owner_id)
+        logger.debug("Route Repo: Fetching all Routes for owner_id=%s", owner_id)
         stmt = (
             select(Route)
             .where(Route.owner_id == owner_id)
@@ -85,13 +87,23 @@ class RouteRepository(BaseRepository[Route]):
         """
         Create a new route from the provided dictionary.
         """
+        logger.debug(f"Route Repo: creating new Route")
+
         new_route = Route(**obj_in.model_dump(exclude={"days"}))
         self.session.add(new_route)
         await self.session.flush()
         if commit:
-            await self.session.commit()
-            await self.session.refresh(new_route)
-        logger.info("Created new route with id=%s", new_route.id)
+            try:
+                await self.session.commit()
+                await self.session.refresh(new_route)
+                logger.debug(f"Route Repo: Route created with id={new_route.id}")
+                return new_route
+            except IntegrityError as e:
+                logger.debug("Route Repo: IntegrityError on Route creation: %s", e)
+                await self.session.rollback()
+                raise
+
+        logger.debug("Route Repo: Created new Route with id=%s", new_route.id)
         return new_route
 
     # ================= ROUTE DAY ================= #
@@ -99,8 +111,8 @@ class RouteRepository(BaseRepository[Route]):
     async def create_day(self, route_id: int, day_data: RouteDayCreate) -> RouteDay:
         route = await self.get(route_id)
         if not route:
-            message = f"Route {route_id} not found"
-            logger.warning(message)
+            message = f"Route Repo: Route {route_id} not found"
+            logger.debug(message)
             raise ValueError(message)
 
         new_day = RouteDay(
@@ -113,9 +125,17 @@ class RouteRepository(BaseRepository[Route]):
             activity = Activity(day_id=new_day.id, **activity_data.model_dump())
             self.session.add(activity)
 
-        await self.session.commit()
-        await self.session.refresh(new_day)
-        logger.info("Created RouteDay id=%s for route_id=%s", new_day.id, route_id)
+        try:
+            await self.session.commit()
+            await self.session.refresh(new_day)
+        except IntegrityError as e:
+            logger.debug("Route Repo: IntegrityError on RouteDay creation: %s", e)
+            await self.session.rollback()
+            raise
+
+        logger.debug(
+            "Route Repo: Created RouteDay id=%s for route_id=%s", new_day.id, route_id
+        )
         return new_day
 
     async def get_days_by_route(self, route_id: int) -> List[RouteDay]:
@@ -129,7 +149,9 @@ class RouteRepository(BaseRepository[Route]):
         )
         result = await self.session.execute(stmt)
         days = result.scalars().all()
-        logger.info("Fetched %s RouteDays for route_id=%s", len(days), route_id)
+        logger.debug(
+            "Route Repo: Fetched %s RouteDays for route_id=%s", len(days), route_id
+        )
         return days
 
     async def delete_day(self, day_id: int) -> bool:
@@ -140,40 +162,9 @@ class RouteRepository(BaseRepository[Route]):
         result = await self.session.execute(stmt)
         day = result.scalar_one_or_none()
         if not day:
+            logger.debug("Route Repo: RouteDay with Id=%s not found", day_id)
             return False
         await self.session.delete(day)
         await self.session.commit()
-        logger.info("Deleted RouteDay id=%s", day_id)
+        logger.debug("Route Repo: Deleted RouteDay id=%s", day_id)
         return True
-
-    # ================= ACTIVITY ================= #
-
-    # async def create_activity(self, day_id: int, activity_data: ActivityCreate) -> Activity:
-    #     """
-    #     Create an Activity under a given RouteDay.
-    #     """
-    #     new_activity = Activity(**activity_data.model_dump(), route_day_id=day_id)
-    #     self.session.add(new_activity)
-    #     await self.session.commit()
-    #     await self.session.refresh(new_activity)
-    #     logger.info("Created Activity id=%s for day_id=%s", new_activity.id, day_id)
-    #     return new_activity
-    #
-    # async def get_activities_by_day(self, day_id: int) -> List[Activity]:
-    #     """
-    #     Get all Activity entries for a given RouteDay.
-    #     """
-    #     stmt = select(Activity).where(Activity.route_day_id == day_id)
-    #     result = await self.session.execute(stmt)
-    #     activities = result.scalars().all()
-    #     logger.info("Fetched %s Activities for day_id=%s", len(activities), day_id)
-    #     return activities
-    #
-    # async def delete_activity(self, activity_id: int) -> None:
-    #     """
-    #     Delete an Activity by its ID.
-    #     """
-    #     stmt = delete(Activity).where(Activity.id == activity_id)
-    #     await self.session.execute(stmt)
-    #     await self.session.commit()
-    #     logger.info("Deleted Activity id=%s", activity_id)
