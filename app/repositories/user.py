@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 class UserRepository(BaseRepository[User]):
     """
     Repository for the User model.
+    Throws IntegrityError if user already exists.
     """
 
     def __init__(self, session: AsyncSession):
@@ -26,29 +27,44 @@ class UserRepository(BaseRepository[User]):
 
     async def get_by_telegram_id(self, telegram_id: int) -> User | None:
         """Get user by telegram_id"""
-        logger.debug("User repo: fetching User with telegram_id=%s", telegram_id)
+        logger.debug("User repo: fetching User (telegram_id=%s)", telegram_id)
         stmt = select(User).where(User.telegram_id == telegram_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def get_by_username(self, username: str) -> User | None:
         """Get user by username"""
-        logger.debug("User repo: fetching User with username=%s", username)
+        logger.debug("User repo: fetching User (username=%s)", username)
         stmt = select(User).where(User.username == username)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def create(self, user_data: UserCreate) -> User:
         """Create a new user"""
-        logger.debug("User repo: creating new User with telegram_id=%s", user_data.telegram_id)
+        logger.debug("User repo: creating new User")
         user = User(**user_data.model_dump())
         self.session.add(user)
         try:
             await self.session.commit()
             await self.session.refresh(user)
-            logger.debug("User repo: User created with id=%s", user.id)
+            logger.debug("User repo: User (id=%s, telegram_id=%s) created", user.id, user_data.telegram_id)
             return user
         except IntegrityError as e:
-            logger.debug("User repo: IntegrityError on user creation: %s", e)
+            logger.debug("User repo: IntegrityError on User creation: %s", e)
             await self.session.rollback()
             raise
+
+    async def delete_by_telegram_id(self, telegram_id: int) -> bool:
+        """
+        Delete a RouteDay by ID.
+        """
+        stmt = select(User).where(User.telegram_id == telegram_id)
+        result = await self.session.execute(stmt)
+        user = result.scalar_one_or_none()
+        if not user:
+            logger.debug("User repo: User (telegram_id=%s) not found", telegram_id)
+            return False
+        await self.session.delete(user)
+        await self.session.commit()
+        logger.debug("User repo: deleted User (telegram_id=%s)", telegram_id)
+        return True

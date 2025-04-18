@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 class RouteRepository(BaseRepository[Route]):
     """
     Repository for working with Route, RouteDay, and Activity models.
+    Throws IntegrityError if user already exists.
+    Throws Exception in case of other exceptions.
     """
 
     def __init__(self, session: AsyncSession):
@@ -26,7 +28,7 @@ class RouteRepository(BaseRepository[Route]):
 
     async def get(self, id: int) -> Optional[Route]:
         """Get route by ID"""
-        logger.debug("Route repo: fetching Route by id=%s", id)
+        logger.debug("Route repo: fetching Route (id=%s)", id)
         stmt = (
             select(Route)
             .where(Route.id == id)
@@ -44,7 +46,7 @@ class RouteRepository(BaseRepository[Route]):
         """
         Get route by its unique share code.
         """
-        logger.debug("Route repo: fetching Route by share_code=%s", share_code)
+        logger.debug("Route repo: fetching Route (share_code=%s)", share_code)
         stmt = (
             select(Route)
             .where(Route.share_code == share_code)
@@ -62,7 +64,7 @@ class RouteRepository(BaseRepository[Route]):
         """
         Get all routes created by a specific user.
         """
-        logger.debug("Route repo: fetching all Routes for owner_id=%s", owner_id)
+        logger.debug("Route repo: fetching all Routes (owner_id=%s)", owner_id)
         stmt = (
             select(Route)
             .where(Route.owner_id == owner_id)
@@ -87,7 +89,7 @@ class RouteRepository(BaseRepository[Route]):
             try:
                 await self.session.commit()
                 await self.session.refresh(new_route)
-                logger.debug("Route repo: Route created with id=%s", new_route.id)
+                logger.debug("Route repo: Route (id=%s) created", new_route.id)
                 return new_route
             except IntegrityError as e:
                 logger.debug("Route repo: IntegrityError on Route creation: %s", e)
@@ -97,7 +99,7 @@ class RouteRepository(BaseRepository[Route]):
                 logger.debug("Route repo: error: %s", e)
                 await self.session.rollback()
                 raise
-        logger.debug("Route repo: created new Route with id=%s", new_route.id)
+        logger.debug("Route repo: created new Route (id=%s)", new_route.id)
         return new_route
 
     # ================= ROUTE DAY ================= #
@@ -106,9 +108,9 @@ class RouteRepository(BaseRepository[Route]):
         # redundantly?
         # route = await self.get(route_id)
         # if not route:
-        #     message = f"Route Repo: Route {route_id} not found"
-        #     logger.debug(message)
-        #     raise ValueError(message)
+        #     message = "Route Repo: Route (route_id=%s) not found"
+        #     logger.debug(message, route_id)
+        #     raise ValueError(message % route_id)
 
         new_day = RouteDay(route_id=route_id, **day_data.model_dump(exclude={"activities"}))
         self.session.add(new_day)
@@ -130,7 +132,7 @@ class RouteRepository(BaseRepository[Route]):
             await self.session.rollback()
             raise
 
-        logger.debug("Route repo: created RouteDay id=%s for Route id=%s", new_day.id, route_id)
+        logger.debug("Route repo: created RouteDay (id=%s) for Route (id=%s)", new_day.id, route_id)
         return new_day
 
     async def get_days_by_route(self, route_id: int) -> List[RouteDay]:
@@ -140,7 +142,7 @@ class RouteRepository(BaseRepository[Route]):
         stmt = select(RouteDay).where(RouteDay.route_id == route_id).options(selectinload(RouteDay.activities))
         result = await self.session.execute(stmt)
         days = result.scalars().all()
-        logger.debug("Route repo: fetched %s route days for route_id=%s", len(days), route_id)
+        logger.debug("Route repo: fetched %s RouteDays for Route (id=%s)", len(days), route_id)
         return days
 
     # Days are deleted automatically when the route is deleted !

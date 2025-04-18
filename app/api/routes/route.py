@@ -20,6 +20,7 @@ router = APIRouter(prefix="/routes", tags=["Routes"])
 
 
 def get_route_service(session: AsyncSession = Depends(get_session)) -> RouteService:
+    """Dependency injection for RouteService."""
     return RouteService(RouteRepository(session))
 
 
@@ -35,6 +36,8 @@ async def list_routes(service: RouteService = Depends(get_route_service)):
 async def get_route(id: int, service: RouteService = Depends(get_route_service)):
     """
     Get detailed information about a route by ID.
+    Raises:
+        RouteNotFoundError: If route does not exist.
     """
     try:
         return await service.get_route_by_id(id)
@@ -47,6 +50,8 @@ async def get_route(id: int, service: RouteService = Depends(get_route_service))
 async def get_route_by_code(share_code: str, service: RouteService = Depends(get_route_service)):
     """
     Get route by share_code.
+    Raises:
+        RouteNotFoundError: If route does not exist.
     """
     try:
         return await service.get_route_by_code(share_code)
@@ -67,6 +72,9 @@ async def get_routes_by_owner(owner_id: int, service: RouteService = Depends(get
 async def create_route(route_in: RouteCreate, service: RouteService = Depends(get_route_service)):
     """
     Create a new travel route.
+    Raises:
+        RouteAlreadyExistsError: If route with the same share_code already exists.
+        InvalidRouteDataError: If route data is invalid.
     """
     try:
         return await service.create_route(route_in)
@@ -82,6 +90,10 @@ async def create_route(route_in: RouteCreate, service: RouteService = Depends(ge
 async def rebuild_route(id: int, route_in: RouteCreate, service: RouteService = Depends(get_route_service)):
     """
     Rebuild an existing route by ID (delete + create new).
+    Raises:
+        RouteNotFoundError: If route does not exist.
+        RouteAlreadyExistsError: If route with the same share_code already exists.
+        InvalidRouteDataError: If route data is invalid.
     """
     try:
         return await service.rebuild_route(id, route_in)
@@ -100,6 +112,8 @@ async def rebuild_route(id: int, route_in: RouteCreate, service: RouteService = 
 async def delete_route(id: int, service: RouteService = Depends(get_route_service)):
     """
     Delete a route by ID.
+    Raises:
+        RouteNotFoundError: If route does not exist.
     """
     try:
         await service.delete_route(id)

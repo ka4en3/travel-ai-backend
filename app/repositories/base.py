@@ -30,7 +30,7 @@ class BaseRepository(Generic[ModelType]):
 
     async def get(self, id: int) -> ModelType | None:
         """Get object by ID"""
-        logger.debug("Base repo: fetching %s with id=%s", self.model.__name__, id)
+        logger.debug("Base repo: fetching %s (id=%s)", self.model.__name__, id)
         stmt = select(self.model).where(self.model.id == id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
@@ -42,11 +42,15 @@ class BaseRepository(Generic[ModelType]):
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def delete(self, id: int, commit: bool = True):
+    async def delete(self, id: int, commit: bool = True) -> bool:
         """Delete object by ID"""
-        logger.debug("Base repo: attempting to delete %s with id=%s", self.model.__name__, id)
+        logger.debug("Base repo: attempting to delete %s (id=%s)", self.model.__name__, id)
         obj = await self.get(id)
+        if not obj:
+            logger.debug("Base repo: %s (id=%s) not found", self.model.__name__, id)
+            return False
         await self.session.delete(obj)
         if commit:
             await self.session.commit()
-        logger.debug("Base repo: %s with id=%s deleted", self.model.__name__, id)
+        logger.debug("Base repo: %s (id=%s) deleted", self.model.__name__, id)
+        return True

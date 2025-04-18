@@ -15,3 +15,11 @@ class UserNotFoundError(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)
+
+
+class InvalidUserDataError(Exception):
+    """Raised when a wrong data provided for user creation."""
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)

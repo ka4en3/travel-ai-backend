@@ -30,7 +30,7 @@ class RouteAccessService:
         """
         existing = await self.repo.get_by_user_and_route(data.user_id, data.route_id)
         if existing:
-            message = "Route access service: RouteAccess already exists for user_id=%s and route_id=%s"
+            message = "Route access service: RouteAccess (user_id=%s, route_id=%s) already exists"
             logger.warning(message, data.user_id, data.route_id)
             raise RouteAccessAlreadyExistsError(message % (data.user_id, data.route_id))
         await self.repo.create(data)

@@ -10,7 +10,6 @@ from exceptions.route import (
     RouteNotFoundError,
     InvalidRouteDataError,
 )
-from repositories.user import UserRepository
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +17,7 @@ logger = logging.getLogger(__name__)
 class RouteService:
     """
     Service layer for managing Routes, RouteDays, and Activities logic.
+    Throws RouteAlreadyExistsError, RouteNotFoundError, InvalidRouteDataError.
     """
 
     def __init__(self, repo: RouteRepository):
@@ -27,26 +27,33 @@ class RouteService:
         """
         Create a new Route and optionally RouteDays and Activities.
         Performs FK checks on owner_id, ai_cache_id, and last_edited_by (if provided).
+        Raises:
+            RouteAlreadyExistsError: If Route with the same share_code already exists.
+            InvalidRouteDataError: If Route data is invalid.
         """
+        logger.info("Route service: creating new Route")
+
+        # check if share_code already exists
         share_code = new_data.share_code.strip()
-
-        logger.info("Route service: creating new Route with code=%s", share_code)
-
         if await self.repo.get_by_share_code(share_code):
-            message = "Route service: Route with code %s already exists"
+            message = "Route service: Route (code=%s) already exists"
             logger.warning(message, share_code)
             raise RouteAlreadyExistsError(message % share_code)
-
+        # check foreign keys
         await check_foreign_keys(self, new_data)
 
-        new_route = await self.repo.create(new_data, commit=True)
+        try:
+            new_route = await self.repo.create(new_data, commit=True)
+            # creating route days, if any
+            if hasattr(new_data, "days") and new_data.days:
+                for day in new_data.days:
+                    await self.repo.create_day(new_route.id, day)
+        except Exception as e:
+            message = "Route service: Route can't be created: %s. Check logs for details"
+            logger.warning(message, e)
+            raise InvalidRouteDataError(message % e)
 
-        # --- Creating route days, if any --- #
-        if hasattr(new_data, "days") and new_data.days:
-            for day in new_data.days:
-                await self.repo.create_day(new_route.id, day)
-
-        logger.info("Route service: Route created with id=%s", new_route.id)
+        logger.info("Route service: Route (id=%s, code=%s) created", new_route.id, share_code)
         return await self.repo.get(new_route.id)
 
     async def list_routes(self) -> List[RouteShort]:
@@ -54,7 +61,7 @@ class RouteService:
         Return a short list of all routes.
         """
         routes = await self.repo.get_all()
-        logger.info("Route service: fetched %s routes", len(routes))
+        logger.info("Route service: fetched %s Routes", len(routes))
         return routes
 
     async def get_route_by_id(self, route_id: int) -> RouteRead:
@@ -63,7 +70,7 @@ class RouteService:
         Raises:
             RouteNotFoundError: If route does not exist.
         """
-        logger.info("Route service: getting Route by id: %s", route_id)
+        logger.info("Route service: getting Route (id=%s)", route_id)
         route = await self.repo.get(route_id)
         if not route:
             message = "Route service: Route (id=%s) not found"
@@ -79,10 +86,10 @@ class RouteService:
         """
         share_code = share_code.strip()
 
-        logger.info("Route service: getting Route with code %s", share_code)
+        logger.info("Route service: getting Route (code=%s)", share_code)
         route = await self.repo.get_by_share_code(share_code)
         if not route:
-            message = "Route service: Route with code %s not found"
+            message = "Route service: Route (code=%s) not found"
             logger.warning(message, share_code)
             raise RouteNotFoundError(message % share_code)
         return route
@@ -91,30 +98,27 @@ class RouteService:
         """
         Get all routes owned by a specific user.
         """
-        logger.info("Route service: getting routes by owner_id: %s", owner_id)
+        logger.info("Route service: getting Routes by owner_id=%s", owner_id)
         return await self.repo.get_by_owner_id(owner_id)
 
     async def delete_route(self, route_id: int) -> bool:
         """
         Delete a route and all related data.
-        Raises:
-            RouteNotFoundError: If route does not exist.
         """
-        logger.info("Route service: deleting Route with id=%s", route_id)
-        route = await self.repo.get(route_id)
-        if not route:
-            message = "Route service: Route (id=%s) not found"
-            logger.warning(message, route_id)
-            raise RouteNotFoundError(message % route_id)
-
+        logger.info("Route service: deleting Route (id=%s)", route_id)
+        await self.get_route_by_id(route_id)
         await self.repo.delete(route_id)
         return True
 
     async def rebuild_route(self, old_route_id: int, new_data: RouteCreate) -> RouteShort:
         """
         Atomically replace an existing route with a new one.
+        Thhrows:
+            RouteNotFoundError: If Route does not exist.
+            RouteAlreadyExistsError: If Route with the same share_code already exists.
+            InvalidRouteDataError: If Route data is invalid.
         """
-        logger.info("Route service: rebuilding Route with id=%s", old_route_id)
+        logger.info("Route service: rebuilding Route (id=%s)", old_route_id)
 
         # check if route exists
         existing = await self.repo.get(old_route_id)
@@ -122,32 +126,35 @@ class RouteService:
             message = "Route service: Route (id=%s) not found"
             logger.warning(message, old_route_id)
             raise RouteNotFoundError(message % old_route_id)
-
         # check if share_code already exists
         share_code = new_data.share_code.strip()
         existing_code = await self.repo.get_by_share_code(share_code)
         if existing_code and existing_code.id != old_route_id:
-            message = "Route service: Route with code %s already exists"
+            message = "Route service: Route (code=%s) already exists"
             logger.warning(message, share_code)
             raise RouteAlreadyExistsError(message % share_code)
         # check foreign keys
         await check_foreign_keys(self, new_data)
 
-        # delete existing route
-        await self.repo.delete(old_route_id, commit=True)
-
-        # create new route
-        new_route = await self.repo.create(new_data, commit=True)
-        # creating route days, if any
-        if hasattr(new_data, "days") and new_data.days:
-            for day in new_data.days:
-                await self.repo.create_day(new_route.id, day)
+        try:
+            # delete existing route
+            await self.repo.delete(old_route_id, commit=True)
+            # create new route
+            new_route = await self.repo.create(new_data, commit=True)
+            # creating route days, if any
+            if hasattr(new_data, "days") and new_data.days:
+                for day in new_data.days:
+                    await self.repo.create_day(new_route.id, day)
+        except Exception as e:
+            message = "Route service: Route can't be rebuild: %s. Check logs for details"
+            logger.warning(message, e)
+            raise InvalidRouteDataError(message % e)
 
         return await self.repo.get(new_route.id)
 
 
 async def check_foreign_keys(self, new_data: RouteCreate) -> None:
-    user_repo = UserRepository(self.session)
+    user_repo = self.repo
     owner = await user_repo.get(new_data.owner_id)
     if not owner:
         message = "User-owner (id=%s) does not exist"
