@@ -9,6 +9,8 @@ from db.sessions import get_session
 from schemas.route import RouteRead, RouteCreate, RouteShort
 from services.crud.route_service import RouteService
 from repositories.route import RouteRepository
+from repositories.user import UserRepository
+from repositories.ai_cache import AICacheRepository
 from exceptions.route import (
     RouteAlreadyExistsError,
     RouteNotFoundError,
@@ -21,7 +23,11 @@ router = APIRouter(prefix="/routes", tags=["Routes"])
 
 def get_route_service(session: AsyncSession = Depends(get_session)) -> RouteService:
     """Dependency injection for RouteService."""
-    return RouteService(RouteRepository(session))
+    return RouteService(
+        route_repo=RouteRepository(session),
+        user_repo=UserRepository(session),
+        cache_repo=AICacheRepository(session),
+    )
 
 
 @router.get("/", response_model=List[RouteShort])
