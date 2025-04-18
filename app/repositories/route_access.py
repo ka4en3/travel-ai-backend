@@ -1,10 +1,12 @@
 # app/repositories/route_access.py
 
 import logging
-from sqlalchemy import select, delete
+
+from typing import Optional, List
+
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List
 
 from models.route_access import RouteAccess
 from schemas.route_access import RouteAccessCreate
@@ -18,25 +20,15 @@ class RouteAccessRepository(BaseRepository[RouteAccess]):
     Repository for working with RouteAccess model.
     """
 
-    model = RouteAccess
-
     def __init__(self, session: AsyncSession):
         super().__init__(RouteAccess, session)
 
-    async def get_by_user_and_route(
-        self, user_id: int, route_id: int
-    ) -> Optional[RouteAccess]:
+    async def get_by_user_and_route(self, user_id: int, route_id: int) -> Optional[RouteAccess]:
         """
         Get route access entry by user_id and route_id.
         """
-        logger.debug(
-            "RouteAccess Repo: Fetching RouteAccess for user_id=%s and route_id=%s",
-            user_id,
-            route_id,
-        )
-        stmt = select(RouteAccess).where(
-            RouteAccess.user_id == user_id, RouteAccess.route_id == route_id
-        )
+        logger.debug("Route access repo: fetching RouteAccess for user_id=%s and route_id=%s", user_id, route_id)
+        stmt = select(RouteAccess).where(RouteAccess.user_id == user_id, RouteAccess.route_id == route_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -44,9 +36,7 @@ class RouteAccessRepository(BaseRepository[RouteAccess]):
         """
         Get all route access entries for a given user.
         """
-        logger.debug(
-            "RouteAccess Repo: Fetching all RouteAccess for user_id=%s", user_id
-        )
+        logger.debug("Route access repo: fetching all RouteAccess for user_id=%s", user_id)
         stmt = select(RouteAccess).where(RouteAccess.user_id == user_id)
         result = await self.session.execute(stmt)
         return result.scalars().all()
@@ -55,9 +45,7 @@ class RouteAccessRepository(BaseRepository[RouteAccess]):
         """
         Get all route access entries for a given route.
         """
-        logger.debug(
-            "RouteAccess Repo: Fetching all RouteAccess for route_id=%s", route_id
-        )
+        logger.debug("Route access repo: fetching all RouteAccess for route_id=%s", route_id)
         stmt = select(RouteAccess).where(RouteAccess.route_id == route_id)
         result = await self.session.execute(stmt)
         return result.scalars().all()
@@ -66,38 +54,25 @@ class RouteAccessRepository(BaseRepository[RouteAccess]):
         """
         Create a new RouteAccess entry.
         """
-        access = RouteAccess(**obj_in.model_dump())
-        self.session.add(access)
+        new_access = RouteAccess(**obj_in.model_dump())
+        self.session.add(new_access)
         try:
             await self.session.commit()
-            await self.session.refresh(access)
+            await self.session.refresh(new_access)
         except IntegrityError as e:
-            logger.debug(
-                "RouteAccess Repo: IntegrityError on RouteAccess creation: %s", e
-            )
+            logger.debug("Route access repo: IntegrityError on RouteAccess creation: %s", e)
             await self.session.rollback()
             raise
 
-        logger.debug("RouteAccess Repo: Created RouteAccess: %s", access)
-        return access
+        logger.debug("Route access repo: created RouteAccess with id: %s", new_access.id)
+        return new_access
 
     async def delete_by_user_and_route(self, user_id: int, route_id: int) -> bool:
         """
         Delete RouteAccess entry for given user and route.
         """
-        access = await self.get_by_user_and_route(user_id, route_id)
-        if not access:
-            logger.debug(
-                "RouteAccess Repo: RouteAccess not found for user_id=%s, route_id=%s",
-                user_id,
-                route_id,
-            )
-            return False
-        await self.session.delete(access)
+        delete_access = await self.get_by_user_and_route(user_id, route_id)
+        await self.session.delete(delete_access)
         await self.session.commit()
-        logger.debug(
-            "RouteAccess Repo: Deleted RouteAccess for user_id=%s, route_id=%s",
-            user_id,
-            route_id,
-        )
+        logger.debug("Route access repo: deleted RouteAccess for user_id=%s and route_id=%s", user_id, route_id)
         return True

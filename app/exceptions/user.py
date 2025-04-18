@@ -4,10 +4,14 @@
 class UserAlreadyExistsError(Exception):
     """Raised when trying to create a user that already exists."""
 
-    def __init__(self, telegram_id: int):
-        self.message = f"User with telegram_id '{telegram_id}' already exists"
+    def __init__(self, message: str):
+        self.message = message
         super().__init__(self.message)
 
 
 class UserNotFoundError(Exception):
-    pass
+    """Raised when a user is not found in the database."""
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)

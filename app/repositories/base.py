@@ -2,6 +2,7 @@
 
 import logging
 from typing import Generic, TypeVar, Type
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from db.base_class import Base
@@ -29,25 +30,23 @@ class BaseRepository(Generic[ModelType]):
 
     async def get(self, id: int) -> ModelType | None:
         """Get object by ID"""
-        logger.debug(f"Base Repo: fetching {self.model.__name__} with id={id}")
+        logger.debug("Base repo: fetching %s with id=%s", self.model.__name__, id)
         stmt = select(self.model).where(self.model.id == id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def get_all(self) -> list[ModelType]:
         """Get all objects in the model"""
-        logger.debug(f"Base Repo: fetching all records of {self.model.__name__}")
+        logger.debug("Base repo: fetching all records of %s", self.model.__name__)
         stmt = select(self.model)
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
     async def delete(self, id: int, commit: bool = True):
         """Delete object by ID"""
-        logger.debug(
-            f"Base Repo: attempting to delete {self.model.__name__} with id={id}"
-        )
+        logger.debug("Base repo: attempting to delete %s with id=%s", self.model.__name__, id)
         obj = await self.get(id)
         await self.session.delete(obj)
         if commit:
             await self.session.commit()
-        logger.debug(f"{self.model.__name__} with id={id} deleted")
+        logger.debug("Base repo: %s with id=%s deleted", self.model.__name__, id)

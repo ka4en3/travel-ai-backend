@@ -1,8 +1,9 @@
 # app/models/route.py
 
+from typing import List
+
 from datetime import datetime, date
 from sqlalchemy import Date
-from typing import List
 from sqlalchemy import ForeignKey, String, Integer, DateTime, JSON, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -26,24 +27,18 @@ class Route(CreatedAtMixin, Base):
     # Route data - stores the actual AI-generated route
     route_data: Mapped[dict] = mapped_column(JSON, nullable=False, default=[])
 
-    owner_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     owner: Mapped["User"] = relationship(
         back_populates="owned_routes",
         foreign_keys=[owner_id],
     )
 
-    ai_cache_id: Mapped[int | None] = mapped_column(
-        ForeignKey("ai_cache.id", ondelete="SET NULL"), nullable=True
-    )
+    ai_cache_id: Mapped[int | None] = mapped_column(ForeignKey("ai_cache.id", ondelete="SET NULL"), nullable=True)
     ai_cache: Mapped["AICache"] = relationship(
         back_populates="routes",
     )
 
-    last_edited_by: Mapped[int | None] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
-    )
+    last_edited_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     last_editor: Mapped["User"] = relationship(
         back_populates="last_edited_routes",
         foreign_keys=[last_edited_by],
@@ -77,9 +72,7 @@ class Route(CreatedAtMixin, Base):
 class RouteDay(Base):
     __tablename__ = "route_days"
 
-    route_id: Mapped[int] = mapped_column(
-        ForeignKey("routes.id", ondelete="CASCADE"), nullable=False
-    )
+    route_id: Mapped[int] = mapped_column(ForeignKey("routes.id", ondelete="CASCADE"), nullable=False)
     day_number: Mapped[int] = mapped_column(nullable=False)
     description: Mapped[str | None] = mapped_column(nullable=True)
     date: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -99,9 +92,7 @@ class RouteDay(Base):
 class Activity(Base):
     __tablename__ = "activities"
 
-    day_id: Mapped[int] = mapped_column(
-        ForeignKey("route_days.id", ondelete="CASCADE"), nullable=False
-    )
+    day_id: Mapped[int] = mapped_column(ForeignKey("route_days.id", ondelete="CASCADE"), nullable=False)
     name: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str | None] = mapped_column(nullable=True)
     start_time: Mapped[str | None] = mapped_column(nullable=True)  # Format: "HH:MM"
@@ -109,9 +100,7 @@ class Activity(Base):
     location: Mapped[str | None] = mapped_column(nullable=True)
     cost: Mapped[float | None] = mapped_column(nullable=True)  # Estimated cost
     notes: Mapped[str | None] = mapped_column(nullable=True)
-    activity_type: Mapped[str | None] = mapped_column(
-        nullable=True
-    )  # "Sightseeing", "Food", "Transportation"
+    activity_type: Mapped[str | None] = mapped_column(nullable=True)  # "Sightseeing", "Food", "Transportation"
     external_link: Mapped[str | None] = mapped_column(nullable=True)
 
     day: Mapped["RouteDay"] = relationship(

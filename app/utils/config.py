@@ -1,9 +1,9 @@
 # app/utils/config.py
 
-from pydantic import Field, ValidationError, field_validator
-from pydantic_settings import BaseSettings
 import os
 import logging
+from pydantic import Field, ValidationError, field_validator
+from pydantic_settings import BaseSettings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

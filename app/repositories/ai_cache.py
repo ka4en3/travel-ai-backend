@@ -2,6 +2,7 @@
 
 import logging
 from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -15,8 +16,6 @@ class AICacheRepository(BaseRepository[AICache]):
     """
     Repository for working with AICache entries.
     """
-
-    model = AICache
 
     def __init__(self, session: AsyncSession):
         super().__init__(AICache, session)
