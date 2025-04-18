@@ -2,8 +2,9 @@
 
 import logging
 from typing import Optional, List
+from typing import Callable, Awaitable, TypeVar
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.exc import IntegrityError
 
 from models.route import Route, RouteDay, Activity
@@ -25,6 +26,16 @@ class RouteRepository(BaseRepository[Route]):
 
     def __init__(self, session: AsyncSession):
         super().__init__(Route, session)
+
+    T = TypeVar("T")
+
+    async def transaction(self, func: Callable[..., Awaitable[T]], *args, **kwargs) -> T:
+        """
+        Execute actions in one transaction.
+        """
+        async with self.session.begin():
+            result = await func(*args, **kwargs)
+            return result
 
     async def get(self, id: int) -> Optional[Route]:
         """Get route by ID"""
@@ -101,6 +112,47 @@ class RouteRepository(BaseRepository[Route]):
                 raise
         logger.debug("Route repo: created new Route (id=%s)", new_route.id)
         return new_route
+
+    # async def rebuild_route(self, old_route_id: int, new_data: RouteCreate) -> Route:
+    #     """
+    #     Atomically replace an existing route with a new one within a single transaction.
+    #     All transaction management happens within this method.
+    #     """
+    #     logger.debug("Route repo: replacing Route (id=%s) with new data", old_route_id)
+    #
+    #     try:
+    #         async with self.session.begin():
+    #             # Delete the existing route
+    #             stmt = delete(Route).where(Route.id == old_route_id)
+    #             await self.session.execute(stmt)
+    #
+    #             # Create new route
+    #             new_route = Route(**new_data.model_dump(exclude={"days"}))
+    #             self.session.add(new_route)
+    #             await self.session.flush()  # To get the new route ID
+    #
+    #             # Create route days if any
+    #             if hasattr(new_data, "days") and new_data.days:
+    #                 for day in new_data.days:
+    #                     new_day = RouteDay(route_id=new_route.id, **day.model_dump(exclude={"activities"}))
+    #                     self.session.add(new_day)
+    #                     await self.session.flush()  # Get the new day ID
+    #
+    #                     # Create activities for the day
+    #                     for activity_data in day.activities:
+    #                         activity = Activity(day_id=new_day.id, **activity_data.model_dump())
+    #                         self.session.add(activity)
+    #
+    #             # Transaction will be committed automatically when context exits
+    #             route_id = new_route.id
+    #
+    #         # Get the full route data after transaction is committed
+    #         return await self.get(route_id)
+    #
+    #     except Exception as e:
+    #         # Transaction will be rolled back automatically
+    #         logger.debug("Route repo: Error during route rebuild: %s", e)
+    #         raise
 
     # ================= ROUTE DAY ================= #
 

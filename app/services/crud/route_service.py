@@ -116,7 +116,6 @@ class RouteService:
 
     async def rebuild_route(self, old_route_id: int, new_data: RouteCreate) -> RouteShort:
         """
-        Atomically replace an existing route with a new one.
         Throws:
             RouteNotFoundError: If Route does not exist.
             RouteAlreadyExistsError: If Route with the same share_code already exists.
@@ -124,6 +123,9 @@ class RouteService:
         """
         logger.info("Route service: rebuilding Route (id=%s)", old_route_id)
 
+        return await self.route_repo.transaction(self._rebuild_route_tx, old_route_id, new_data)
+
+    async def _rebuild_route_tx(self, old_route_id: int, new_data: RouteCreate) -> RouteShort:
         # check if route exists
         existing = await self.route_repo.get(old_route_id)
         if not existing:
@@ -155,6 +157,12 @@ class RouteService:
             raise InvalidRouteDataError(message % e)
 
         return await self.route_repo.get(new_route.id)
+
+        # try:
+        #     return await self.route_repo.rebuild_route(old_route_id, new_data)
+        # except Exception as e:
+        #     logger.warning("Route service: Error during route replacement: %s", e)
+        #     raise
 
 
 async def check_foreign_keys(self, new_data: RouteCreate) -> None:
