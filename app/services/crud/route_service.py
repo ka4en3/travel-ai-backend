@@ -27,6 +27,35 @@ class RouteService:
         self.user_repo = user_repo
         self.cache_repo = cache_repo
 
+    async def _check_foreign_keys(self, new_data: RouteCreate) -> None:
+        """
+        Validate all foreign key references in the RouteCreate schema.
+
+        Raises:
+            InvalidRouteDataError: if any FK points to a non-existent object.
+        """
+        user_repo = self.user_repo
+        cache_repo = self.cache_repo
+        owner = await user_repo.get(new_data.owner_id)
+        if not owner:
+            message = "Owner (user_id=%s) does not exist"
+            logger.warning(message, new_data.owner_id)
+            raise InvalidRouteDataError(message % new_data.owner_id)
+
+        if new_data.ai_cache_id is not None:
+            ai_cache = await cache_repo.get(new_data.ai_cache_id)
+            if not ai_cache:
+                message = "AICache reference (id=%s) does not exist"
+                logger.warning(message, new_data.ai_cache_id)
+                raise InvalidRouteDataError(message % new_data.ai_cache_id)
+
+        if getattr(new_data, "last_edited_by", None) is not None:
+            editor = await user_repo.get(new_data.last_edited_by)
+            if not editor:
+                message = "Last editor (user_id=%s) does not exist"
+                logger.warning(message, new_data.last_edited_by)
+                raise InvalidRouteDataError(message % new_data.last_edited_by)
+
     async def create_route(self, new_data: RouteCreate) -> RouteShort:
         """
         Create a new Route and optionally RouteDays and Activities.
@@ -44,7 +73,7 @@ class RouteService:
             logger.warning(message, share_code)
             raise RouteAlreadyExistsError(message % share_code)
         # check foreign keys
-        await check_foreign_keys(self, new_data)
+        await self._check_foreign_keys(new_data)
 
         try:
             new_route = await self.route_repo.create(new_data, commit=True)
@@ -135,18 +164,18 @@ class RouteService:
         # check if share_code already exists
         share_code = new_data.share_code.strip()
         existing_code = await self.route_repo.get_by_share_code(share_code)
-        if existing_code and existing_code.id != old_route_id:
+        if existing_code:
             message = "Route service: Route (code=%s) already exists"
             logger.warning(message, share_code)
             raise RouteAlreadyExistsError(message % share_code)
         # check foreign keys
-        await check_foreign_keys(self, new_data)
+        await self._check_foreign_keys(new_data)
 
         try:
             # delete existing route
-            await self.route_repo.delete(old_route_id, commit=True)
+            await self.route_repo.delete(old_route_id, commit=False)
             # create new route
-            new_route = await self.route_repo.create(new_data, commit=True)
+            new_route = await self.route_repo.create(new_data, commit=False)
             # creating route days, if any
             if hasattr(new_data, "days") and new_data.days:
                 for day in new_data.days:
@@ -157,33 +186,3 @@ class RouteService:
             raise InvalidRouteDataError(message % e)
 
         return await self.route_repo.get(new_route.id)
-
-        # try:
-        #     return await self.route_repo.rebuild_route(old_route_id, new_data)
-        # except Exception as e:
-        #     logger.warning("Route service: Error during route replacement: %s", e)
-        #     raise
-
-
-async def check_foreign_keys(self, new_data: RouteCreate) -> None:
-    user_repo = self.user_repo
-    cache_repo = self.cache_repo
-    owner = await user_repo.get(new_data.owner_id)
-    if not owner:
-        message = "Owner (user_id=%s) does not exist"
-        logger.warning(message, new_data.owner_id)
-        raise InvalidRouteDataError(message % new_data.owner_id)
-
-    if new_data.ai_cache_id is not None:
-        ai_cache = await cache_repo.get(new_data.ai_cache_id)
-        if not ai_cache:
-            message = "AICache reference (id=%s) does not exist"
-            logger.warning(message, new_data.ai_cache_id)
-            raise InvalidRouteDataError(message % new_data.ai_cache_id)
-
-    if getattr(new_data, "last_edited_by", None) is not None:
-        editor = await user_repo.get(new_data.last_edited_by)
-        if not editor:
-            message = "Last editor (user_id=%s) does not exist"
-            logger.warning(message, new_data.last_edited_by)
-            raise InvalidRouteDataError(message % new_data.last_edited_by)

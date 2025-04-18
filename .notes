@@ -1,7 +1,8 @@
+3. auto-fill data
 4. add route_access
 5. AICache CRUD
 6. Migration: add remove Data types
-
+7. tests
 
 alembic revision --autogenerate -m "Initial migration"
 alembic upgrade head -v
