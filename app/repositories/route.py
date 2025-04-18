@@ -96,7 +96,7 @@ class RouteRepository(BaseRepository[Route]):
         new_route = Route(**obj_in.model_dump(exclude={"days"}))
         self.session.add(new_route)
         await self.session.flush()
-        if commit:
+        if commit:  # in case commit=False all exceptions are caught in the service layer
             try:
                 await self.session.commit()
                 await self.session.refresh(new_route)
@@ -110,12 +110,15 @@ class RouteRepository(BaseRepository[Route]):
                 logger.debug("Route repo: error: %s", e)
                 await self.session.rollback()
                 raise
-        logger.debug("Route repo: created new Route (id=%s)", new_route.id)
+
+        logger.debug(
+            "Route repo: created new Route (id=%s)", new_route.id
+        )  # in case commit=False still needs to be logged
         return new_route
 
     # ================= ROUTE DAY ================= #
 
-    async def create_day(self, route_id: int, day_data: RouteDayCreate) -> RouteDay:
+    async def create_day(self, route_id: int, day_data: RouteDayCreate, commit: bool = True) -> RouteDay:
         # redundantly?
         # route = await self.get(route_id)
         # if not route:
@@ -130,18 +133,21 @@ class RouteRepository(BaseRepository[Route]):
         for activity_data in day_data.activities:
             activity = Activity(day_id=new_day.id, **activity_data.model_dump())
             self.session.add(activity)
+        # await self.session.flush()
 
-        try:
-            await self.session.commit()
-            await self.session.refresh(new_day)
-        except IntegrityError as e:
-            logger.debug("Route repo: IntegrityError on RouteDay creation: %s", e)
-            await self.session.rollback()
-            raise
-        except Exception as e:
-            logger.debug("Route repo: error: %s", e)
-            await self.session.rollback()
-            raise
+        if commit:
+            try:
+                await self.session.commit()
+                await self.session.refresh(new_day)
+                return new_day
+            except IntegrityError as e:
+                logger.debug("Route repo: IntegrityError on RouteDay creation: %s", e)
+                await self.session.rollback()
+                raise
+            except Exception as e:
+                logger.debug("Route repo: error: %s", e)
+                await self.session.rollback()
+                raise
 
         logger.debug("Route repo: created RouteDay (id=%s) for Route (id=%s)", new_day.id, route_id)
         return new_day

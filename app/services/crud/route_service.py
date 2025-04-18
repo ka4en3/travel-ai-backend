@@ -80,10 +80,10 @@ class RouteService:
             # creating route days, if any
             if hasattr(new_data, "days") and new_data.days:
                 for day in new_data.days:
-                    await self.route_repo.create_day(new_route.id, day)
+                    await self.route_repo.create_day(new_route.id, day, commit=True)
         except Exception as e:
             message = "Route service: Route can't be created: %s. Check logs for details"
-            logger.warning(message, e)
+            logger.error(message, e)
             raise InvalidRouteDataError(message % e)
 
         logger.info("Route service: Route (id=%s, code=%s) created", new_route.id, share_code)
@@ -179,10 +179,10 @@ class RouteService:
             # creating route days, if any
             if hasattr(new_data, "days") and new_data.days:
                 for day in new_data.days:
-                    await self.route_repo.create_day(new_route.id, day)
+                    await self.route_repo.create_day(new_route.id, day, commit=False)
         except Exception as e:
             message = "Route service: Route can't be rebuild: %s. Check logs for details"
-            logger.warning(message, e)
+            logger.error(message, e)
             raise InvalidRouteDataError(message % e)
 
         return await self.route_repo.get(new_route.id)
