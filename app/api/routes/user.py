@@ -36,7 +36,7 @@ async def list_users(service: UserService = Depends(get_user_service)):
 @router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def create_user(user_in: UserCreate, service: UserService = Depends(get_user_service)):
     """
-    Create a new user from Telegram ID.
+    Create a new user.
     Raises:
         UserAlreadyExistsError: If user already exists.
         InvalidUserDataError: If user data is invalid.
@@ -51,32 +51,35 @@ async def create_user(user_in: UserCreate, service: UserService = Depends(get_us
         raise HTTPException(status_code=422, detail=e.message)
 
 
-@router.get("/{telegram_id}", response_model=UserRead)
-async def get_user_by_telegram_id(
-    telegram_id: int,
+@router.get("/{user_id}", response_model=UserRead)
+async def get_user(
+    user_id: int,
     service: UserService = Depends(get_user_service),
 ):
     """
-    Get full user details by Telegram ID.
+    Get full user details by ID.
     Raises:
         UserNotFoundError: If user not found.
     """
     try:
-        return await service.get_user_by_telegram_id(telegram_id)
+        return await service.get_user_by_id(user_id)
     except UserNotFoundError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=404, detail=e.message)
 
 
-@router.delete("/{telegram_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(telegram_id: int, service: UserService = Depends(get_user_service)):
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
+    user_id: int,
+    service: UserService = Depends(get_user_service),
+):
     """
-    Delete a user by Telegram ID.
+    Delete a user by ID.
     Raises:
         UserNotFoundError: If user not found.
     """
     try:
-        await service.delete_user_by_telegram_id(telegram_id)
+        await service.delete_user(user_id)
     except UserNotFoundError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=404, detail=e.message)
