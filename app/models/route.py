@@ -15,7 +15,7 @@ class Route(CreatedAtMixin, Base):
     __tablename__ = "routes"
 
     name: Mapped[str] = mapped_column(nullable=False, index=True, default="New Route")
-    share_code: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
+    share_code: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)  # secrets.token_urlsafe(16)
     is_public: Mapped[bool] = mapped_column(nullable=False, default=False)
 
     origin: Mapped[str] = mapped_column(index=True, nullable=False)
@@ -24,7 +24,7 @@ class Route(CreatedAtMixin, Base):
     budget: Mapped[float] = mapped_column(nullable=False)
     interests: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=[])
 
-    # Route data - stores the actual AI-generated route
+    # Route data - stores the actual AI-generated route == AICache.result
     route_data: Mapped[dict] = mapped_column(JSON, nullable=False, default=[])
 
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -55,6 +55,7 @@ class Route(CreatedAtMixin, Base):
         back_populates="route",
         cascade="all, delete-orphan",
     )
+
     days: Mapped[List["RouteDay"]] = relationship(
         back_populates="route",
         cascade="all, delete-orphan",

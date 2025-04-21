@@ -1,8 +1,8 @@
 # app/schemas/route.py
 
-from pydantic import BaseModel, field_validator
 from typing import Optional, List
 from datetime import datetime, date
+from pydantic import BaseModel, field_validator
 from .route_access import RouteAccessCreate, RouteAccessRead
 from .export import ExportCreate, ExportRead
 
@@ -85,7 +85,6 @@ class RouteBase(BaseModel):
     duration_days: int
     budget: float
     interests: List[str] = []
-    route_data: dict
     owner_id: int
     ai_cache_id: Optional[int] = None
     last_edited_by: Optional[int] = None
@@ -129,6 +128,7 @@ class RouteCreate(RouteBase):
 class RouteRead(RouteBase):
     id: int
     name: str
+    route_data: dict
     days: List[RouteDayRead] = []
     access_list: List[RouteAccessRead] = []
     exports: List[ExportRead] = []

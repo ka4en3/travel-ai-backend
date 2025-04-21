@@ -1,4 +1,65 @@
 {
+    "name": "Tokyo Explorer",
+    "share_code": "check_share_code",
+    "owner_id": 1,
+    "origin": "Tokyo",
+    "destination": "Tokyo",
+    "duration_days": 2,
+    "budget": 1000.0,
+    "interests": ["technology", "culture"],
+    "days": [
+        {
+            "day_number": 1,
+            "description": "Akihabara tech tour",
+            "date": "2025-04-20",
+            "activities": [
+                {
+                    "name": "Gadget shopping",
+                    "start_time": "10:00",
+                    "end_time": "12:30",
+                    "location": "Akihabara",
+                    "cost": 150.0,
+                    "activity_type": "Shopping"
+                },
+                {
+                    "name": "Anime museum",
+                    "start_time": "14:00",
+                    "end_time": "16:00",
+                    "location": "Akihabara Culture Zone",
+                    "cost": 20.0,
+                    "activity_type": "Museum"
+                }
+            ]
+        },
+        {
+            "day_number": 2,
+            "description": "Shrines and street food",
+            "date": "2025-04-21",
+            "activities": [
+                {
+                    "name": "Visit Meiji Shrine",
+                    "start_time": "10:00",
+                    "end_time": "11:30",
+                    "location": "Shibuya",
+                    "cost": 0.0,
+                    "activity_type": "Sightseeing"
+                },
+                {
+                    "name": "Street food at Harajuku",
+                    "start_time": "12:00",
+                    "end_time": "13:30",
+                    "location": "Takeshita Street",
+                    "cost": 25.0,
+                    "activity_type": "Food"
+                }
+            ]
+        }
+    ]
+}
+
+
+
+{
   "name": "Weekend in Rome",
   "origin": "Rome",
   "destination": "Rome",
