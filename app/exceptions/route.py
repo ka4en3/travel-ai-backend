@@ -23,3 +23,11 @@ class InvalidRouteDataError(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(message)
+
+
+class PermissionDeniedError(Exception):
+    """Raised when user does not have permission to perform an action."""
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)
