@@ -11,6 +11,7 @@ from services.crud.route_service import RouteService
 from repositories.route import RouteRepository
 from repositories.user import UserRepository
 from repositories.ai_cache import AICacheRepository
+from repositories import RouteAccessRepository
 from exceptions.route import (
     RouteAlreadyExistsError,
     RouteNotFoundError,
@@ -27,6 +28,7 @@ def get_route_service(session: AsyncSession = Depends(get_session)) -> RouteServ
         route_repo=RouteRepository(session),
         user_repo=UserRepository(session),
         cache_repo=AICacheRepository(session),
+        access_repo=RouteAccessRepository(session),
     )
 
 

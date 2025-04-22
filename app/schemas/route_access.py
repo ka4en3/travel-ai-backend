@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, field_validator
 
-from models.route_access import RouteRole
+from constants.roles import RouteRole
 
 
 class RouteAccessBase(BaseModel):

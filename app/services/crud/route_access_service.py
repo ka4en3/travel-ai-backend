@@ -3,7 +3,7 @@
 import logging
 from typing import Optional, List
 
-from models.route_access import RouteRole
+from constants.roles import RouteRole
 from schemas.route_access import RouteAccessCreate
 from repositories.route_access import RouteAccessRepository
 from exceptions.route_access import (
@@ -22,7 +22,7 @@ class RouteAccessService:
     def __init__(self, repo: RouteAccessRepository):
         self.repo = repo
 
-    async def grant_access(self, data: RouteAccessCreate) -> None:
+    async def grant_access(self, data: RouteAccessCreate, commit: bool = True) -> None:
         """
         Grant access to a user for a route.
         Raises:
@@ -33,13 +33,26 @@ class RouteAccessService:
             message = "Route access service: RouteAccess (user_id=%s, route_id=%s) already exists"
             logger.warning(message, data.user_id, data.route_id)
             raise RouteAccessAlreadyExistsError(message % (data.user_id, data.route_id))
-        await self.repo.create(data)
+        await self.repo.create(data, commit)
         logger.info(
             "Route access service: granted %s access to user_id=%s for route_id=%s",
             data.role,
             data.user_id,
             data.route_id,
         )
+
+    async def grant_editor_access(self, route_id: int, user_id: int) -> None:
+        """
+        Grant 'EDITOR' role access to a user for the given route.
+        """
+        # from schemas.route_access import RouteAccessCreate  # avoid circular import
+
+        access_data = RouteAccessCreate(
+            user_id=user_id,
+            route_id=route_id,
+            role=RouteRole.EDITOR,
+        )
+        await self.grant_access(access_data)
 
     async def revoke_access(self, user_id: int, route_id: int) -> None:
         """

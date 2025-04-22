@@ -1,7 +1,9 @@
+# app/utils/utils.py
+
 from nanoid import generate
 
 
-def generate_share_code(size: int = 16) -> str:
+def generate_nanoid_code(size: int = 16) -> str:
     """
     Generate a secure share code using nanoid.
     """

@@ -1,8 +1,7 @@
 # app/fixtures/data.py
 
 from datetime import datetime, timedelta, date
-
-from models import RouteRole
+from constants.roles import RouteRole
 
 USERS_FIXTURES = [
     {

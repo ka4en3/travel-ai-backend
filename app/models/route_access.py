@@ -1,15 +1,9 @@
 # app/models/route_access.py
 
-from enum import Enum
 from sqlalchemy import ForeignKey, Enum as PgEnum, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from db.base_class import Base
-
-
-class RouteRole(Enum):
-    CREATOR = "creator"
-    EDITOR = "editor"
-    VIEWER = "viewer"
+from constants.roles import RouteRole
 
 
 # Many-to-many relationship for shared routes

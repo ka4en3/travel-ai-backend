@@ -3,16 +3,18 @@
 import logging
 from typing import Optional, List
 
-from utils.utils import generate_share_code
+from utils.utils import generate_nanoid_code
+from constants.roles import RouteRole
 from schemas.route import RouteCreate, RouteRead, RouteShort
-from repositories.route import RouteRepository
-from repositories.user import UserRepository
-from repositories.ai_cache import AICacheRepository
+from schemas.route_access import RouteAccessCreate
+from repositories import *
 from exceptions.route import (
     RouteAlreadyExistsError,
     RouteNotFoundError,
     InvalidRouteDataError,
 )
+from services.crud.route_access_service import RouteAccessService
+
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +30,12 @@ class RouteService:
         route_repo: RouteRepository,
         user_repo: UserRepository,
         cache_repo: AICacheRepository,
+        access_repo: RouteAccessRepository,
     ):
         self.route_repo = route_repo
         self.user_repo = user_repo
         self.cache_repo = cache_repo
+        self.access_repo = access_repo
 
     async def _check_foreign_keys(self, new_data: RouteCreate) -> None:
         """
@@ -74,7 +78,7 @@ class RouteService:
 
         # If share_code not provided — generate it
         if not getattr(new_data, "share_code") or not new_data.share_code:
-            new_data.share_code = generate_share_code()
+            new_data.share_code = generate_nanoid_code()
         share_code = new_data.share_code.strip()
         # check if share_code already exists
         if await self.route_repo.get_by_share_code(share_code):
@@ -91,10 +95,19 @@ class RouteService:
             if hasattr(new_data, "days") and new_data.days:
                 for day in new_data.days:
                     await self.route_repo.create_day(new_route.id, day, commit=True)
-        except Exception as e:
-            message = (
-                "Route service: Route can't be created: %s. Check logs for details"
+
+            # add route access
+            access_service = RouteAccessService(self.access_repo)
+            await access_service.grant_access(
+                RouteAccessCreate(
+                    user_id=new_data.owner_id,
+                    route_id=new_route.id,
+                    role=RouteRole.CREATOR,
+                ),
+                commit=True,
             )
+        except Exception as e:
+            message = "Route service: Route can't be created: %s. Check logs for details"
             logger.error(message, e)
             raise InvalidRouteDataError(message % e)
 
@@ -159,9 +172,7 @@ class RouteService:
         await self.route_repo.delete(route_id)
         return True
 
-    async def rebuild_route(
-        self, old_route_id: int, new_data: RouteCreate
-    ) -> RouteShort:
+    async def rebuild_route(self, old_route_id: int, new_data: RouteCreate) -> RouteShort:
         """
         Throws:
             RouteNotFoundError: If Route does not exist.
@@ -170,13 +181,9 @@ class RouteService:
         """
         logger.info("Route service: rebuilding Route (id=%s)", old_route_id)
 
-        return await self.route_repo.transaction(
-            self._rebuild_route_tx, old_route_id, new_data
-        )
+        return await self.route_repo.transaction(self._rebuild_route_tx, old_route_id, new_data)
 
-    async def _rebuild_route_tx(
-        self, old_route_id: int, new_data: RouteCreate
-    ) -> RouteShort:
+    async def _rebuild_route_tx(self, old_route_id: int, new_data: RouteCreate) -> RouteShort:
         # check if route exists
         existing = await self.route_repo.get(old_route_id)
         if not existing:
@@ -186,7 +193,7 @@ class RouteService:
 
         # If share_code not provided — generate it
         if not hasattr(new_data, "share_code") or not new_data.share_code:
-            new_data.share_code = generate_share_code()
+            new_data.share_code = generate_nanoid_code()
         share_code = new_data.share_code.strip()
         # check if share_code already exists
         existing_code = await self.route_repo.get_by_share_code(share_code)
@@ -207,10 +214,19 @@ class RouteService:
             if hasattr(new_data, "days") and new_data.days:
                 for day in new_data.days:
                     await self.route_repo.create_day(new_route.id, day, commit=False)
-        except Exception as e:
-            message = (
-                "Route service: Route can't be rebuild: %s. Check logs for details"
+
+            # add route access
+            access_service = RouteAccessService(self.access_repo)
+            await access_service.grant_access(
+                RouteAccessCreate(
+                    user_id=new_data.owner_id,
+                    route_id=new_route.id,
+                    role=RouteRole.CREATOR,
+                ),
+                commit=False,
             )
+        except Exception as e:
+            message = "Route service: Route can't be rebuild: %s. Check logs for details"
             logger.error(message, e)
             raise InvalidRouteDataError(message % e)
 

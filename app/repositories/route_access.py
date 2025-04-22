@@ -51,21 +51,24 @@ class RouteAccessRepository(BaseRepository[RouteAccess]):
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def create(self, obj_in: RouteAccessCreate) -> RouteAccess:
+    async def create(self, obj_in: RouteAccessCreate, commit: bool = True) -> RouteAccess:
         """
         Create a new RouteAccess entry.
         """
         new_access = RouteAccess(**obj_in.model_dump())
         self.session.add(new_access)
-        try:
-            await self.session.commit()
-            await self.session.refresh(new_access)
-        except IntegrityError as e:
-            logger.debug("Route access repo: IntegrityError on RouteAccess creation: %s", e)
-            await self.session.rollback()
-            raise
+        if commit:  # in case commit=False all exceptions are caught in the service layer
+            try:
+                await self.session.commit()
+                await self.session.refresh(new_access)
+            except IntegrityError as e:
+                logger.debug("Route access repo: IntegrityError on RouteAccess creation: %s", e)
+                await self.session.rollback()
+                raise
 
-        logger.debug("Route access repo: created RouteAccess (id=%s)", new_access.id)
+        logger.debug(
+            "Route access repo: created RouteAccess (id=%s)", new_access.id
+        )  # in case commit=False still needs to be logged
         return new_access
 
     async def delete_by_user_and_route(self, user_id: int, route_id: int) -> bool:
