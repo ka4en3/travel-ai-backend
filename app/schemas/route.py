@@ -79,8 +79,8 @@ class RouteDayRead(RouteDayBase):
 
 class RouteBase(BaseModel):
     name: str = "New Route"
-    share_code: str
     origin: str
+    share_code: str = None # must be present in pydantic model, but formed automatically
     destination: str
     duration_days: int
     budget: float
