@@ -6,7 +6,7 @@ alembic upgrade head
 
 echo "Seeding fixture data..."
 # python app/fixtures/load.py
-python -m fixtures.load
+python -m fixtures.load_with_services
 
 echo "Starting FastAPI server..."
 exec "$@"

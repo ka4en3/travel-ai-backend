@@ -28,7 +28,7 @@ class RouteAccessService:
     def __init__(
         self,
         access_repo: RouteAccessRepository,
-        route_repo: RouteRepository,
+        route_repo: RouteRepository = None,
     ):
         self.access_repo = access_repo
         self.route_repo = route_repo
@@ -46,8 +46,8 @@ class RouteAccessService:
         user_id: int,
         route_id: int,
         allowed: List[RouteRole],
-        action: str,
-    ):
+        action: str = "",
+    ) -> bool:
         access = await self.access_repo.get_by_user_and_route(user_id, route_id)
         if not access:
             msg = "Route access service: User (id=%s) has no access to route (id=%s)"
@@ -57,6 +57,7 @@ class RouteAccessService:
             msg = "Route access service: User (id=%s) must be one of %s to %s; current role: %s"
             logger.warning(msg, user_id, allowed, action, access.role)
             raise PermissionDeniedError(msg % (user_id, allowed, action, access.role))
+        return True
 
     async def get_share_code(self, user_id: int, route_id: int) -> str:
         """
@@ -95,53 +96,102 @@ class RouteAccessService:
         """
         Accept invitation by share code → grant VIEWER access.
         """
-        # find route
         route = await self.route_repo.get_by_share_code(share_code)
         if not route:
             msg = "Route access service: Route with share_code='%s' not found"
             logger.warning(msg, share_code)
             raise RouteNotFoundError(msg % share_code)
 
-        # check existing
         existing = await self.access_repo.get_by_user_and_route(user_id, route.id)
         if existing:
             msg = "Route access service: User (id=%s) already has access to Route (id=%s)"
             logger.warning(msg, user_id, route.id)
             raise RouteAccessAlreadyExistsError(msg % (user_id, route.id))
 
-        # grant viewer
         data = RouteAccessCreate(
             user_id=user_id,
             route_id=route.id,
             role=RouteRole.VIEWER,
         )
         access = await self.grant_access(data)
-        logger.info("Granted VIEWER access: %s", access)
+        logger.info("Route access service: granted VIEWER access: %s", access)
         return access
 
-    async def check_user_has_access(self, user_id: int, route_id: int, required_roles: List[RouteRole]) -> bool:
+    async def grant_editor(self, current_user_id: int, target_user_id: int, route_id: int) -> RouteAccess:
         """
-        Check if a user has one of the required roles for the route.
-        Returns:
-            True if access exists and role is acceptable.
-        Raises:
-            RouteAccessNotFoundError If no access exists.
+        Grant EDITOR access to target_user. Only CREATOR or EDITOR can do this.
         """
-        access = await self.access_repo.get_by_user_and_route(user_id, route_id)
-        if not access:
-            message = "Route access service: Route access not found for user_id=%s and route_id=%s"
-            logger.warning(message, user_id, route_id)
-            raise RouteAccessNotFoundError(message % (user_id, route_id))
-        if access.role not in required_roles:
-            logger.warning(
-                "Route access service: user_id=%s has insufficient role %s for route_id=%s. Required: %s",
-                user_id,
-                access.role,
-                route_id,
-                repr(required_roles),
-            )
-            return False
-        return True
+        await self._ensure_route_exists(route_id)
+        await self._ensure_has_role(
+            current_user_id,
+            route_id,
+            allowed=[RouteRole.CREATOR, RouteRole.EDITOR],
+            action="grant editor",
+        )
+
+        existing = await self.access_repo.get_by_user_and_route(target_user_id, route_id)
+        if existing:
+            msg = "Route access service: User (id=%s) already has access to route (id=%s)"
+            logger.warning(msg, target_user_id, route_id)
+            raise RouteAccessAlreadyExistsError(msg % (target_user_id, route_id))
+
+        data = RouteAccessCreate(
+            user_id=target_user_id,
+            route_id=route_id,
+            role=RouteRole.EDITOR,
+        )
+        access = await self.grant_access(data)
+        logger.info("Granted EDITOR access: %s", access)
+        return access
+
+    # async def check_user_has_access(self, user_id: int, route_id: int, required_roles: List[RouteRole]) -> bool:
+    #     """
+    #     Check if a user has one of the required roles for the route.
+    #     Returns:
+    #         True if access exists and role is acceptable.
+    #     Raises:
+    #         RouteAccessNotFoundError If no access exists.
+    #     """
+    #     access = await self.access_repo.get_by_user_and_route(user_id, route_id)
+    #     if not access:
+    #         message = "Route access service: Route access not found for user_id=%s and route_id=%s"
+    #         logger.warning(message, user_id, route_id)
+    #         raise RouteAccessNotFoundError(message % (user_id, route_id))
+    #     if access.role not in required_roles:
+    #         logger.warning(
+    #             "Route access service: user_id=%s has insufficient role %s for route_id=%s. Required: %s",
+    #             user_id,
+    #             access.role,
+    #             route_id,
+    #             repr(required_roles),
+    #         )
+    #         return False
+    #     return True
+
+    async def revoke_access(self, current_user_id: int, target_user_id: int, route_id: int) -> None:
+        """
+        Revoke any access (VIEWER or EDITOR) for target_user. Only CREATOR or EDITOR can do this.
+        """
+        await self._ensure_route_exists(route_id)
+        await self._ensure_has_role(
+            current_user_id,
+            route_id,
+            allowed=[RouteRole.CREATOR, RouteRole.EDITOR],
+            action="revoke access",
+        )
+
+        existing = await self.access_repo.get_by_user_and_route(target_user_id, route_id)
+        if not existing:
+            msg = f"User (id={target_user_id}) has no access to route (id={route_id})"
+            logger.warning(msg)
+            raise RouteAccessNotFoundError(msg)
+
+        await self.access_repo.delete_by_user_and_route(target_user_id, route_id)
+        logger.info(
+            "Revoked access for user (id=%s) on route (id=%s)",
+            target_user_id,
+            route_id,
+        )
 
     async def list_access_for_user(self, user_id: int) -> List[int]:
         """

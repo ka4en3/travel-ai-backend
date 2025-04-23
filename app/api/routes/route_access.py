@@ -18,7 +18,7 @@ router = APIRouter(prefix="/route-access", tags=["Route Access"])
 
 def get_route_access_service(session: AsyncSession = Depends(get_session)) -> RouteAccessService:
     return RouteAccessService(
-        repo=RouteAccessRepository(session),
+        access_repo=RouteAccessRepository(session),
         route_repo=RouteRepository(session),
     )
 

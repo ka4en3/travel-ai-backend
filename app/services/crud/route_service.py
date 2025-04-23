@@ -97,7 +97,7 @@ class RouteService:
                     await self.route_repo.create_day(new_route.id, day, commit=True)
 
             # add route access
-            access_service = RouteAccessService(self.access_repo)
+            access_service = RouteAccessService(access_repo=self.access_repo)
             await access_service.grant_access(
                 RouteAccessCreate(
                     user_id=new_data.owner_id,
@@ -216,7 +216,7 @@ class RouteService:
                     await self.route_repo.create_day(new_route.id, day, commit=False)
 
             # add route access
-            access_service = RouteAccessService(self.access_repo)
+            access_service = RouteAccessService(access_repo=self.access_repo)
             await access_service.grant_access(
                 RouteAccessCreate(
                     user_id=new_data.owner_id,
