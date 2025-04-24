@@ -14,7 +14,7 @@ from repositories import (
     RouteAccessRepository,
 )
 from schemas.user import UserCreate
-from schemas.route import RouteCreate
+from schemas.route import RouteCreate, RouteGenerateRequest
 from schemas.route_access import RouteAccessCreate
 from schemas.ai_cache import AICacheCreate
 from constants.roles import RouteRole
@@ -65,9 +65,11 @@ async def load_routes(session):
 
     logger.info("🔧 Loading route fixtures via RouteService...")
     for data in ROUTES_FIXTURES:
-        route_in = RouteCreate(**data)
+        route_in = RouteGenerateRequest(**data)
         try:
-            route = await service.create_route(route_in)
+            user = await user_repo.get_by_telegram_id(100001)
+            if user:
+                route = await service.create_route(route_in, user.id)
             logger.info("✅ Created Route id=%s code=%s", route.id, route.share_code)
         except Exception as e:
             logger.error("❌ Skipping route %s: %s", data.get("name"), e)

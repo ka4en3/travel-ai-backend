@@ -1,6 +1,7 @@
 # app/repositories/ai_cache.py
 
 import logging
+import math
 from typing import Optional
 from datetime import datetime
 
@@ -73,9 +74,16 @@ class AICacheRepository(BaseRepository[AICache]):
         Create a new cache entry.
         """
         logger.info("AICache Repo: creating new cache entry")
+
         data = obj_in.model_dump()
         # compute cache_key = f"{origin}:{destination}:{days}:{budget}"
+        data["origin"] = data["origin"].strip().lower()
+        data["destination"] = data["destination"].strip().lower()
+        budget_raw = data["budget"]
+        budget_num = float(budget_raw) if isinstance(budget_raw, str) else budget_raw
+        data["budget"] = math.ceil(budget_num)
         data["cache_key"] = f"{data['origin']}:{data['destination']}:{data['duration_days']}:{data['budget']}"
+
         new_cache = AICache(**data)
         self.session.add(new_cache)
         try:

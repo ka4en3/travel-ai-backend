@@ -77,24 +77,44 @@ class RouteDayRead(RouteDayBase):
 # ================= ROUTE ================= #
 
 
-class RouteBase(BaseModel):
-    name: str = "New Route"
+class RouteGenerateRequest(BaseModel):
     origin: str
-    share_code: str = None  # must be present in pydantic model, but formed automatically
     destination: str
     duration_days: int
     budget: float
     interests: List[str] = []
-    owner_id: int
-    ai_cache_id: Optional[int] = None
-    last_edited_by: Optional[int] = None
     is_public: bool = False
 
+    @field_validator("origin", "destination")
+    @classmethod
+    def validate_location(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Location must be a non-empty string")
+        return v
 
-class RouteCreate(RouteBase):
+    @field_validator("duration_days")
+    @classmethod
+    def validate_duration(cls, v: int) -> int:
+        if v <= 0:
+            raise ValueError("Duration must be at least 1 day")
+        return v
+
+    @field_validator("budget")
+    @classmethod
+    def validate_budget(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("Budget must be greater than zero")
+        return v
+
+
+class RouteCreate(RouteGenerateRequest):
+    name: str
+    share_code: str
+    owner_id: int
+    route_data: dict
     days: List[RouteDayCreate] = []
-    access_list: List[RouteAccessCreate] = []
-    exports: List[ExportCreate] = []
+    ai_cache_id: Optional[int] = None
+    last_edited_by: Optional[int] = None
 
     @field_validator("origin", "destination")
     @classmethod
@@ -125,28 +145,31 @@ class RouteCreate(RouteBase):
         return value
 
 
-class RouteRead(RouteBase):
-    id: int
-    name: str
-    route_data: dict
-    days: List[RouteDayRead] = []
-    access_list: List[RouteAccessRead] = []
-    exports: List[ExportRead] = []
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
 class RouteShort(BaseModel):
     id: int
     name: str
+    owner_id: int
     share_code: str
     origin: str
     destination: str
     duration_days: int
     budget: float
+    interests: List[str]
+
+    class Config:
+        from_attributes = True
+
+
+class RouteRead(RouteShort):
+    route_data: dict
+    days: List[RouteDayRead] = []
+    ai_cache_id: Optional[int]
+    last_edited_by: Optional[int]
+    access_list: List[RouteAccessRead] = []
+    exports: List[ExportRead] = []
+    is_public: bool
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True

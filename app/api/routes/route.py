@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.sessions import get_session
-from schemas.route import RouteRead, RouteCreate, RouteShort
+from dependencies.auth import get_current_user
+from schemas.route import RouteRead, RouteCreate, RouteShort, RouteGenerateRequest
 from services.crud.route_service import RouteService
 from repositories.route import RouteRepository
 from repositories.user import UserRepository
@@ -77,7 +78,11 @@ async def get_routes_by_owner(owner_id: int, service: RouteService = Depends(get
 
 
 @router.post("/", response_model=RouteShort, status_code=status.HTTP_201_CREATED)
-async def create_route(route_in: RouteCreate, service: RouteService = Depends(get_route_service)):
+async def create_route(
+    payload: RouteGenerateRequest,
+    current_user=Depends(get_current_user),
+    svc: RouteService = Depends(get_route_service),
+):
     """
     Create a new travel route.
     Raises:
@@ -85,7 +90,7 @@ async def create_route(route_in: RouteCreate, service: RouteService = Depends(ge
         InvalidRouteDataError: If route data is invalid.
     """
     try:
-        return await service.create_route(route_in)
+        return await svc.create_route(payload, owner_id=current_user.id)
     except RouteAlreadyExistsError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=409, detail=e.message)

@@ -1,11 +1,12 @@
 # app/services/crud/route_service.py
 
 import logging
+import math
 from typing import Optional, List
 
 from utils.utils import generate_nanoid_code
 from constants.roles import RouteRole
-from schemas.route import RouteCreate, RouteRead, RouteShort
+from schemas.route import RouteCreate, RouteRead, RouteShort, RouteGenerateRequest, RouteDayCreate
 from schemas.route_access import RouteAccessCreate
 from repositories import *
 from exceptions.route import (
@@ -66,7 +67,11 @@ class RouteService:
                 logger.warning(message, new_data.last_edited_by)
                 raise InvalidRouteDataError(message % new_data.last_edited_by)
 
-    async def create_route(self, new_data: RouteCreate) -> RouteShort:
+    async def create_route(
+        self,
+        payload: RouteGenerateRequest,
+        owner_id: int,
+    ) -> RouteShort:
         """
         Create a new Route and optionally RouteDays and Activities.
         Performs FK checks on owner_id, ai_cache_id, and last_edited_by (if provided).
@@ -74,17 +79,74 @@ class RouteService:
             RouteAlreadyExistsError: If Route with the same share_code already exists.
             InvalidRouteDataError: If Route data is invalid.
         """
-        logger.info("Route service: creating new Route")
+        logger.info("Route service: creating new route for %s → %s", payload.origin, payload.destination)
 
-        # If share_code not provided — generate it
-        if not getattr(new_data, "share_code") or not new_data.share_code:
-            new_data.share_code = generate_nanoid_code()
-        share_code = new_data.share_code.strip()
+        result = None
+        # first check cache
+        cached = await self.cache_repo.find_similar(
+            origin=payload.origin.strip().lower(),
+            destination=payload.destination.strip().lower(),
+            duration_days=payload.duration_days,
+            budget=math.ceil(payload.budget),
+        )
+        if cached:
+            logger.info("Cache hit: using cached plan id=%s", cached.id)
+            result = cached.result
+            cached.hit_count += 1
+            await self.cache_repo.session.commit()
+        else:
+            pass
+            # TODO: no cache -> ask AI
+            # try:
+            #     result = await self.ai_svc.generate_route(
+            #         origin=payload.origin,
+            #         destination=payload.destination,
+            #         duration_days=payload.duration_days,
+            #         interests=payload.interests,
+            #         budget=payload.budget,
+            #     )
+            # except Exception as e:
+            #     logger.error("AI generation failed: %s", e)
+            #     raise InvalidRouteDataError("Failed to generate route via AI")
+
+            # save new cache
+            # cache_entry = AICacheCreate(
+            #     origin=payload.origin,
+            #     destination=payload.destination,
+            #     duration_days=payload.duration_days,
+            #     budget=payload.budget,
+            #     interests=payload.interests or [],
+            #     original_prompt=result.get("original_prompt", ""),
+            #     prompt_hash=result.get("prompt_hash", ""),
+            #     result=result,
+            # )
+            # await self.cache_repo.create(cache_entry)
+
+        if result is None:
+            raise InvalidRouteDataError("Route service: failed to generate route, no data received from AI")
+
+        # build RouteCreate
+        new_data = RouteCreate(
+            name=result["name"],
+            origin=payload.origin,
+            destination=payload.destination,
+            duration_days=payload.duration_days,
+            budget=payload.budget,
+            interests=payload.interests or cached.interests,
+            route_data=result,
+            days=[RouteDayCreate(**day) for day in result["days"]],
+            is_public=payload.is_public,
+            ai_cache_id=(cached.id if cached else None),
+            share_code=generate_nanoid_code(),
+            owner_id=owner_id,
+        )
+
+        # COMMENTED OUT: can't be as now use generate_nanoid_code()
         # check if share_code already exists
-        if await self.route_repo.get_by_share_code(share_code):
-            message = "Route service: Route (code=%s) already exists"
-            logger.warning(message, share_code)
-            raise RouteAlreadyExistsError(message % share_code)
+        # if await self.route_repo.get_by_share_code(internal.share_code):
+        #     message = "Route service: Route (code=%s) already exists"
+        #     logger.warning(message, internal.share_code)
+        #     raise RouteAlreadyExistsError(message % internal.share_code)
 
         # check foreign keys
         await self._check_foreign_keys(new_data)
@@ -97,8 +159,8 @@ class RouteService:
                     await self.route_repo.create_day(new_route.id, day, commit=True)
 
             # add route access
-            access_service = RouteAccessService(access_repo=self.access_repo)
-            await access_service.grant_access(
+            access_svc = RouteAccessService(access_repo=self.access_repo)
+            await access_svc.grant_access(
                 RouteAccessCreate(
                     user_id=new_data.owner_id,
                     route_id=new_route.id,
@@ -107,14 +169,14 @@ class RouteService:
                 commit=True,
             )
         except Exception as e:
-            message = "Route service: Route can't be created: %s. Check logs for details"
+            message = "Route service: failed to save Route: %s. Check logs for details"
             logger.error(message, e)
             raise InvalidRouteDataError(message % e)
 
         logger.info(
             "Route service: Route (id=%s, code=%s) created",
             new_route.id,
-            share_code,
+            new_route.share_code,
         )
         return await self.route_repo.get(new_route.id)
 
