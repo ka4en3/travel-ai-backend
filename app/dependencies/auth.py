@@ -1,3 +1,5 @@
+# app/dependencies/auth.py
+
 from models import User
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException, status

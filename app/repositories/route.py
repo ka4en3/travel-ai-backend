@@ -29,13 +29,16 @@ class RouteRepository(BaseRepository[Route]):
 
     T = TypeVar("T")
 
-    async def transaction(self, func: Callable[..., Awaitable[T]], *args, **kwargs) -> T:
+    async def transaction(self, func: Callable[..., Awaitable[T]], *args, **kwargs):
         """
         Execute actions in one transaction.
         """
+        if self.session.in_transaction():
+            # tx_ctx = self.session.begin_nested()  # SAVEPOINT
+            await self.session.rollback()  # rollback any previous transaction
+
         async with self.session.begin():
-            result = await func(*args, **kwargs)
-            return result
+            return await func(*args, **kwargs)
 
     async def get(self, id: int) -> Optional[Route]:
         """Get route by ID"""

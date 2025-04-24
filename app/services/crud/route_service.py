@@ -38,7 +38,10 @@ class RouteService:
         self.cache_repo = cache_repo
         self.access_repo = access_repo
 
-    async def _check_foreign_keys(self, new_data: RouteCreate) -> None:
+    async def _check_foreign_keys(
+        self,
+        new_data: RouteCreate,
+    ) -> None:
         """
         Validate all foreign key references in the RouteCreate schema.
 
@@ -67,21 +70,13 @@ class RouteService:
                 logger.warning(message, new_data.last_edited_by)
                 raise InvalidRouteDataError(message % new_data.last_edited_by)
 
-    async def create_route(
+    async def _get_new_data(
         self,
         payload: RouteGenerateRequest,
         owner_id: int,
-    ) -> RouteShort:
-        """
-        Create a new Route and optionally RouteDays and Activities.
-        Performs FK checks on owner_id, ai_cache_id, and last_edited_by (if provided).
-        Raises:
-            RouteAlreadyExistsError: If Route with the same share_code already exists.
-            InvalidRouteDataError: If Route data is invalid.
-        """
-        logger.info("Route service: creating new route for %s → %s", payload.origin, payload.destination)
-
+    ) -> RouteCreate:
         result = None
+
         # first check cache
         cached = await self.cache_repo.find_similar(
             origin=payload.origin.strip().lower(),
@@ -93,7 +88,7 @@ class RouteService:
             logger.info("Cache hit: using cached plan id=%s", cached.id)
             result = cached.result
             cached.hit_count += 1
-            await self.cache_repo.session.commit()
+            # await self.cache_repo.session.commit()
         else:
             pass
             # TODO: no cache -> ask AI
@@ -125,7 +120,7 @@ class RouteService:
         if result is None:
             raise InvalidRouteDataError("Route service: failed to generate route, no data received from AI")
 
-        # build RouteCreate
+        # build scheme RouteCreate
         new_data = RouteCreate(
             name=result["name"],
             origin=payload.origin,
@@ -143,10 +138,29 @@ class RouteService:
 
         # COMMENTED OUT: can't be as now use generate_nanoid_code()
         # check if share_code already exists
-        # if await self.route_repo.get_by_share_code(internal.share_code):
+        # if await self.route_repo.get_by_share_code(new_data.share_code):
         #     message = "Route service: Route (code=%s) already exists"
-        #     logger.warning(message, internal.share_code)
-        #     raise RouteAlreadyExistsError(message % internal.share_code)
+        #     logger.warning(message, new_data.share_code)
+        #     raise RouteAlreadyExistsError(message % new_data.share_code)
+
+        return new_data
+
+    async def create_route(
+        self,
+        payload: RouteGenerateRequest,
+        owner_id: int,
+    ) -> RouteShort:
+        """
+        Create a new Route and optionally RouteDays and Activities.
+        Performs FK checks on owner_id, ai_cache_id, and last_edited_by (if provided).
+        Raises:
+            RouteAlreadyExistsError: If Route with the same share_code already exists.
+            InvalidRouteDataError: If Route data is invalid.
+        """
+        logger.info("Route service: creating new route for %s → %s", payload.origin, payload.destination)
+
+        # build new data
+        new_data = await self._get_new_data(payload, owner_id)
 
         # check foreign keys
         await self._check_foreign_keys(new_data)
@@ -234,7 +248,12 @@ class RouteService:
         await self.route_repo.delete(route_id)
         return True
 
-    async def rebuild_route(self, old_route_id: int, new_data: RouteCreate) -> RouteShort:
+    async def rebuild_route(
+        self,
+        old_route_id: int,
+        payload: RouteGenerateRequest,
+        owner_id: int,
+    ) -> RouteShort:
         """
         Throws:
             RouteNotFoundError: If Route does not exist.
@@ -243,9 +262,9 @@ class RouteService:
         """
         logger.info("Route service: rebuilding Route (id=%s)", old_route_id)
 
-        return await self.route_repo.transaction(self._rebuild_route_tx, old_route_id, new_data)
+        return await self.route_repo.transaction(self._rebuild_route_tx, old_route_id, payload, owner_id)
 
-    async def _rebuild_route_tx(self, old_route_id: int, new_data: RouteCreate) -> RouteShort:
+    async def _rebuild_route_tx(self, old_route_id: int, payload: RouteGenerateRequest, owner_id: int) -> RouteShort:
         # check if route exists
         existing = await self.route_repo.get(old_route_id)
         if not existing:
@@ -253,16 +272,8 @@ class RouteService:
             logger.warning(message, old_route_id)
             raise RouteNotFoundError(message % old_route_id)
 
-        # If share_code not provided — generate it
-        if not hasattr(new_data, "share_code") or not new_data.share_code:
-            new_data.share_code = generate_nanoid_code()
-        share_code = new_data.share_code.strip()
-        # check if share_code already exists
-        existing_code = await self.route_repo.get_by_share_code(share_code)
-        if existing_code:
-            message = "Route service: Route (code=%s) already exists"
-            logger.warning(message, share_code)
-            raise RouteAlreadyExistsError(message % share_code)
+        # build new data
+        new_data = await self._get_new_data(payload, owner_id)
 
         # check foreign keys
         await self._check_foreign_keys(new_data)

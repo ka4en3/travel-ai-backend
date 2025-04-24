@@ -34,52 +34,65 @@ def get_route_service(session: AsyncSession = Depends(get_session)) -> RouteServ
 
 
 @router.get("/", response_model=List[RouteShort])
-async def list_routes(service: RouteService = Depends(get_route_service)):
+async def list_routes(svc: RouteService = Depends(get_route_service)):
     """
     Get a list of all routes (short info).
     """
-    return await service.list_routes()
+    return await svc.list_routes()
 
 
 @router.get("/{id}", response_model=RouteRead)
-async def get_route(id: int, service: RouteService = Depends(get_route_service)):
+async def get_route(
+    id: int,
+    svc: RouteService = Depends(get_route_service),
+):
     """
     Get detailed information about a route by ID.
     Raises:
         RouteNotFoundError: If route does not exist.
     """
     try:
-        return await service.get_route_by_id(id)
+        return await svc.get_route_by_id(id)
     except RouteNotFoundError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=404, detail=e.message)
 
 
 @router.get("/by_code/{share_code}", response_model=RouteRead)
-async def get_route_by_code(share_code: str, service: RouteService = Depends(get_route_service)):
+async def get_route_by_code(
+    share_code: str,
+    svc: RouteService = Depends(get_route_service),
+):
     """
     Get route by share_code.
     Raises:
         RouteNotFoundError: If route does not exist.
     """
     try:
-        return await service.get_route_by_code(share_code)
+        return await svc.get_route_by_code(share_code)
     except RouteNotFoundError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=404, detail=e.message)
 
 
 @router.get("/by_owner/{owner_id}", response_model=List[RouteRead])
-async def get_routes_by_owner(owner_id: int, service: RouteService = Depends(get_route_service)):
+async def get_routes_by_owner(
+    owner_id: int,
+    svc: RouteService = Depends(get_route_service),
+):
     """
     Get all routes owned by a specific user.
     """
-    return await service.get_route_by_owner(owner_id)
+    return await svc.get_route_by_owner(owner_id)
 
 
-@router.post("/", response_model=RouteShort, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=RouteShort,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_route(
-    payload: RouteGenerateRequest,
+    route_in: RouteGenerateRequest,
     current_user=Depends(get_current_user),
     svc: RouteService = Depends(get_route_service),
 ):
@@ -90,7 +103,7 @@ async def create_route(
         InvalidRouteDataError: If route data is invalid.
     """
     try:
-        return await svc.create_route(payload, owner_id=current_user.id)
+        return await svc.create_route(route_in, owner_id=current_user.id)
     except RouteAlreadyExistsError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=409, detail=e.message)
@@ -100,7 +113,12 @@ async def create_route(
 
 
 @router.put("/{id}", response_model=RouteShort)
-async def rebuild_route(id: int, route_in: RouteCreate, service: RouteService = Depends(get_route_service)):
+async def rebuild_route(
+    id: int,
+    route_in: RouteGenerateRequest,
+    current_user=Depends(get_current_user),
+    svc: RouteService = Depends(get_route_service),
+):
     """
     Rebuild an existing route by ID (delete + create new).
     Raises:
@@ -109,7 +127,7 @@ async def rebuild_route(id: int, route_in: RouteCreate, service: RouteService = 
         InvalidRouteDataError: If route data is invalid.
     """
     try:
-        return await service.rebuild_route(id, route_in)
+        return await svc.rebuild_route(id, route_in, owner_id=current_user.id)
     except RouteNotFoundError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=404, detail=e.message)
@@ -122,14 +140,17 @@ async def rebuild_route(id: int, route_in: RouteCreate, service: RouteService = 
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_route(id: int, service: RouteService = Depends(get_route_service)):
+async def delete_route(
+    id: int,
+    svc: RouteService = Depends(get_route_service),
+):
     """
     Delete a route by ID.
     Raises:
         RouteNotFoundError: If route does not exist.
     """
     try:
-        await service.delete_route(id)
+        await svc.delete_route(id)
     except RouteNotFoundError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=404, detail=e.message)
