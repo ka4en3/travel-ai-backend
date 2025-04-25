@@ -1,6 +1,6 @@
 # app/api/routes/route_access.py
 
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.sessions import get_session
@@ -9,7 +9,7 @@ from schemas.user import UserRead
 from services.crud.route_access_service import RouteAccessService
 from repositories.route_access import RouteAccessRepository
 from repositories.route import RouteRepository
-from dependencies.auth import get_current_user
+from api.dependencies import get_current_user
 from exceptions.route import RouteNotFoundError, PermissionDeniedError
 from exceptions.route_access import RouteAccessAlreadyExistsError, RouteAccessNotFoundError
 

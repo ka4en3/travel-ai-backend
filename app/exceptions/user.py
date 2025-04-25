@@ -23,3 +23,11 @@ class InvalidUserDataError(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(message)
+
+
+class AuthenticationError(Exception):
+    """Raised when username/password are invalid."""
+
+    def __init__(self, detail: str = "Incorrect username or password"):
+        self.message = detail
+        super().__init__(self.message)

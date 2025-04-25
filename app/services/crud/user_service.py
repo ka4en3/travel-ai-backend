@@ -9,7 +9,10 @@ from exceptions.user import (
     UserAlreadyExistsError,
     UserNotFoundError,
     InvalidUserDataError,
+    AuthenticationError,
 )
+from utils.security import hash_password, verify_password, create_access_token
+from schemas.token import Token
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +48,26 @@ class UserService:
 
         logger.info("User service: User (user_id=%s, telegram_id=%s) created", user.id, user.telegram_id)
         return user
+
+    async def register(self, data: UserCreate) -> UserRead:
+        if data.email:
+            if await self.repo.get_by_email(data.email):
+                raise UserAlreadyExistsError(...)
+            hashed = hash_password(data.password)
+            user = await self.repo.create(UserCreate(**data.model_dump(exclude={"password"}), password_hash=hashed))
+        else:
+            # Telegram registration
+            if await self.repo.get_by_telegram_id(data.telegram_id):
+                raise UserAlreadyExistsError(...)
+            user = await self.repo.create(data)
+        return user
+
+    async def authenticate(self, email: str, password: str) -> Token:
+        user = await self.repo.get_by_email(email)
+        if not user or not verify_password(password, user.password_hash):
+            raise AuthenticationError(...)
+        token = create_access_token(subject=str(user.id))
+        return Token(access_token=token)
 
     async def get_user_by_id(self, user_id: int) -> UserRead:
         """

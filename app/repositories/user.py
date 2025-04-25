@@ -25,20 +25,6 @@ class UserRepository(BaseRepository[User]):
         """
         super().__init__(User, session)
 
-    async def get_by_telegram_id(self, telegram_id: int) -> User | None:
-        """Get user by telegram_id"""
-        logger.debug("User repo: fetching User (telegram_id=%s)", telegram_id)
-        stmt = select(User).where(User.telegram_id == telegram_id)
-        result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
-
-    async def get_by_username(self, username: str) -> User | None:
-        """Get user by username"""
-        logger.debug("User repo: fetching User (username=%s)", username)
-        stmt = select(User).where(User.username == username)
-        result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
-
     async def create(self, user_data: UserCreate) -> User:
         """Create a new user"""
         logger.debug("User repo: creating new User")
@@ -54,6 +40,25 @@ class UserRepository(BaseRepository[User]):
             await self.session.rollback()
             raise
 
+    async def get_by_telegram_id(self, telegram_id: int) -> User | None:
+        """Get user by telegram_id"""
+        logger.debug("User repo: fetching User (telegram_id=%s)", telegram_id)
+        stmt = select(User).where(User.telegram_id == telegram_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_by_username(self, username: str) -> User | None:
+        """Get user by username"""
+        logger.debug("User repo: fetching User (username=%s)", username)
+        stmt = select(User).where(User.username == username)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_by_email(self, email: str) -> User | None:
+        stmt = select(User).where(User.email == email)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def delete_by_telegram_id(self, telegram_id: int) -> bool:
         """
         Delete a RouteDay by ID.
@@ -67,4 +72,15 @@ class UserRepository(BaseRepository[User]):
         await self.session.delete(user)
         await self.session.commit()
         logger.debug("User repo: deleted User (telegram_id=%s)", telegram_id)
+        return True
+
+    async def delete_by_email(self, email: str) -> bool:
+        logger.info("User repo: deleting User by email=%s", email)
+        stmt = select(User).where(User.email == email)
+        result = await self.session.execute(stmt)
+        user = result.scalar_one_or_none()
+        if not user:
+            return False
+        await self.session.delete(user)
+        await self.session.commit()
         return True

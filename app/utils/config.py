@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     API_HOST: str = Field(default="0.0.0.0")
     API_PORT: int = Field(default=8000, ge=1, le=65535)
 
+    # JWT
+    JWT_SECRET_KEY: str = Field(..., env="JWT_SECRET_KEY")
+    JWT_ALGORITHM: str = Field("HS256", env="JWT_ALGORITHM")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(60 * 24, env="ACCESS_TOKEN_EXPIRE_MINUTES")
+
     # DEBUG
     DEBUG: bool = False
 

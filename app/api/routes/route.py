@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.sessions import get_session
-from dependencies.auth import get_current_user
-from schemas.route import RouteRead, RouteCreate, RouteShort, RouteGenerateRequest
+from api.dependencies import get_current_user
+from schemas.route import RouteRead, RouteShort, RouteGenerateRequest
 from services.crud.route_service import RouteService
 from repositories.route import RouteRepository
 from repositories.user import UserRepository
