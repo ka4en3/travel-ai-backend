@@ -1,36 +1,63 @@
 # app/api/routes/auth.py
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from repositories.user import UserRepository
-from services.auth_service import AuthService
+
+from services.crud.user_service import UserService
 from schemas.token import Token
 from db.sessions import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
-from schemas.user import UserCreate
-from utils.security import hash_password
+from schemas.user import UserCreate, UserRead
+from exceptions.user import (
+    UserAlreadyExistsError,
+    InvalidUserDataError,
+)
 
-router = APIRouter(tags=["Auth"])
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/users/auth", tags=["Auth"])
 
 
-@router.post("/auth/token", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
-    user_repo = UserRepository(session)
-    auth_svc = AuthService(user_repo)
+def get_user_service(session: AsyncSession = Depends(get_session)) -> UserService:
+    """Dependency for user service."""
+    return UserService(UserRepository(session))
+
+
+@router.post("/token", response_model=Token)
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    svc: UserService = Depends(get_user_service),
+):
     try:
-        token = await auth_svc.authenticate(form_data.username, form_data.password)
+        token = await svc.authenticate(form_data.username, form_data.password)
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
-    return {"access_token": token}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return {"access_token": token, "token_type": "bearer"}
 
 
-@router.post("/auth/register", response_model=None, status_code=201)
-async def register(user_in: UserCreate, session: AsyncSession = Depends(get_session)):
-    # здесь можно использовать UserService, но нужно захэшировать пароль
-    from repositories.user import UserRepository
-
-    repo = UserRepository(session)
-    user = user_in.model_dump()
-    user["password_hash"] = hash_password(user_in.password)  # добавьте поле password в UserCreate!
-    await repo.create(UserCreate(**user))
+@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+async def register(
+    user_in: UserCreate,
+    svc: UserService = Depends(get_user_service),
+):
+    """
+    Create a new user with e-mail or telegram_id.
+    Raises:
+        UserAlreadyExistsError: If user already exists.
+        InvalidUserDataError: If user data is invalid.
+    """
+    try:
+        return await svc.register(user_in)
+    except UserAlreadyExistsError as e:
+        logger.warning(str(e))
+        raise HTTPException(status_code=409, detail=e.message)
+    except InvalidUserDataError as e:
+        logger.warning(str(e))
+        raise HTTPException(status_code=422, detail=e.message)

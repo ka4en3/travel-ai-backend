@@ -26,35 +26,40 @@ def get_user_service(session: AsyncSession = Depends(get_session)) -> UserServic
 
 
 @router.get("/", response_model=List[UserShort])
-async def list_users(service: UserService = Depends(get_user_service)):
+async def list_users(svc: UserService = Depends(get_user_service)):
     """
     Get a list of all users.
     """
-    return await service.list_users()
+    return await svc.list_users()
 
 
-@router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-async def create_user(user_in: UserCreate, service: UserService = Depends(get_user_service)):
-    """
-    Create a new user.
-    Raises:
-        UserAlreadyExistsError: If user already exists.
-        InvalidUserDataError: If user data is invalid.
-    """
-    try:
-        return await service.create_user(user_in)
-    except UserAlreadyExistsError as e:
-        logger.warning(str(e))
-        raise HTTPException(status_code=409, detail=e.message)
-    except InvalidUserDataError as e:
-        logger.warning(str(e))
-        raise HTTPException(status_code=422, detail=e.message)
+# old route to create only telegram user
+
+# @router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+# async def create_user(
+#     user_in: UserCreate,
+#     svc: UserService = Depends(get_user_service),
+# ):
+#     """
+#     Create a new user.
+#     Raises:
+#         UserAlreadyExistsError: If user already exists.
+#         InvalidUserDataError: If user data is invalid.
+#     """
+#     try:
+#         return await svc.create_user(user_in)
+#     except UserAlreadyExistsError as e:
+#         logger.warning(str(e))
+#         raise HTTPException(status_code=409, detail=e.message)
+#     except InvalidUserDataError as e:
+#         logger.warning(str(e))
+#         raise HTTPException(status_code=422, detail=e.message)
 
 
 @router.get("/{user_id}", response_model=UserRead)
 async def get_user(
     user_id: int,
-    service: UserService = Depends(get_user_service),
+    svc: UserService = Depends(get_user_service),
 ):
     """
     Get full user details by ID.
@@ -62,7 +67,7 @@ async def get_user(
         UserNotFoundError: If user not found.
     """
     try:
-        return await service.get_user_by_id(user_id)
+        return await svc.get_user_by_id(user_id)
     except UserNotFoundError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=404, detail=e.message)
@@ -71,7 +76,7 @@ async def get_user(
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
     user_id: int,
-    service: UserService = Depends(get_user_service),
+    svc: UserService = Depends(get_user_service),
 ):
     """
     Delete a user by ID.
@@ -79,7 +84,7 @@ async def delete_user(
         UserNotFoundError: If user not found.
     """
     try:
-        await service.delete_user(user_id)
+        await svc.delete_user(user_id)
     except UserNotFoundError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=404, detail=e.message)

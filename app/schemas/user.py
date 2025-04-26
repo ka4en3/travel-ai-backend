@@ -7,7 +7,7 @@ from datetime import datetime
 
 class UserBase(BaseModel):
     # both registration options are possible
-    # at the create-level will validate that at least one of them is
+    # at the create-level will validate that at least one of them is set
     telegram_id: Optional[int] = None
     email: Optional[EmailStr] = None
 
@@ -22,6 +22,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     # only for e-mail registration
     password: Optional[str] = None
+    password_hash: Optional[str] = None
 
     @field_validator("password", mode="before")
     @classmethod
@@ -29,7 +30,6 @@ class UserCreate(UserBase):
         if values.get("email") and not value:
             raise ValueError("Password is required when registering by email")
         return value
-
 
 class UserRead(UserBase):
     id: int

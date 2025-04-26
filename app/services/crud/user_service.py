@@ -26,7 +26,7 @@ class UserService:
     def __init__(self, repo: UserRepository):
         self.repo = repo
 
-    async def create_user(self, user_in: UserCreate) -> UserRead:
+    async def _create_telegram_user(self, user_in: UserCreate) -> UserRead:
         """
         Create a new user.
         Raises:
@@ -46,26 +46,50 @@ class UserService:
             logger.warning(message, user_in.telegram_id, e)
             raise InvalidUserDataError(message % (user_in.telegram_id, e))
 
-        logger.info("User service: User (user_id=%s, telegram_id=%s) created", user.id, user.telegram_id)
         return user
 
-    async def register(self, data: UserCreate) -> UserRead:
-        if data.email:
-            if await self.repo.get_by_email(data.email):
-                raise UserAlreadyExistsError(...)
-            hashed = hash_password(data.password)
-            user = await self.repo.create(UserCreate(**data.model_dump(exclude={"password"}), password_hash=hashed))
+    async def register(self, user_in: UserCreate) -> UserRead:
+        # e-mail registration
+        if user_in.email:
+            existing = await self.repo.get_by_email(user_in.email)
+            if existing:
+                message = "User service: User (e-mail=%s) already exists"
+                logger.warning(message, user_in.email)
+                raise UserAlreadyExistsError(message % user_in.email)
+
+            hashed = hash_password(user_in.password)
+
+            try:
+                user = await self.repo.create(
+                    UserCreate(**user_in.model_dump(exclude={"password"}), password_hash=hashed)
+                )
+            except Exception as e:
+                message = "User service: User (e-mail=%s) can't be created: %s. Check logs for details"
+                logger.warning(message, user_in.email, e)
+                raise InvalidUserDataError(message % (user_in.email, e))
         else:
             # Telegram registration
-            if await self.repo.get_by_telegram_id(data.telegram_id):
-                raise UserAlreadyExistsError(...)
-            user = await self.repo.create(data)
+            user = await self._create_telegram_user(user_in)
+
+        logger.info(
+            "User service: User (user_id=%s, telegram_id=%s, e-mail=%s) created",
+            user.id,
+            user.telegram_id,
+            user.email,
+        )
+
         return user
 
     async def authenticate(self, email: str, password: str) -> Token:
+        """
+        Проверить email/password.
+        Raises AuthenticationError если невалидно.
+
+        Аутентифицировать и вернуть JWT.
+        """
         user = await self.repo.get_by_email(email)
         if not user or not verify_password(password, user.password_hash):
-            raise AuthenticationError(...)
+            raise AuthenticationError()
         token = create_access_token(subject=str(user.id))
         return Token(access_token=token)
 
