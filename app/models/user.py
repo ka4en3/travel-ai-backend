@@ -16,7 +16,7 @@ class User(CreatedAtMixin, Base):
     __tablename__ = "users"
 
     telegram_id: Mapped[int] = mapped_column(unique=True, index=True, nullable=True)
-    email: Mapped[str] = mapped_column(String(256), unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(256), unique=True, index=True, nullable=True)
     password_hash: Mapped[str] = mapped_column(String(128), nullable=True, default=None)
 
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

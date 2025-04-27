@@ -20,6 +20,7 @@ from exceptions.route import (
     RouteAlreadyExistsError,
     RouteNotFoundError,
     InvalidRouteDataError,
+    PermissionDeniedError,
 )
 
 logger = logging.getLogger(__name__)
@@ -61,6 +62,9 @@ async def get_route(
     """
     try:
         return await svc.get_route_by_id(id)
+    except PermissionDeniedError as e:
+        logger.warning(str(e))
+        raise HTTPException(status_code=403, detail=e.message)
     except RouteNotFoundError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=404, detail=e.message)
@@ -145,6 +149,9 @@ async def rebuild_route(
     """
     try:
         return await svc.rebuild_route(id, route_in, owner_id=current_user.id)
+    except PermissionDeniedError as e:
+        logger.warning(str(e))
+        raise HTTPException(status_code=403, detail=e.message)
     except RouteNotFoundError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=404, detail=e.message)
@@ -170,6 +177,9 @@ async def delete_route(
     """
     try:
         await svc.delete_route(id)
+    except PermissionDeniedError as e:
+        logger.warning(str(e))
+        raise HTTPException(status_code=403, detail=e.message)
     except RouteNotFoundError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=404, detail=e.message)

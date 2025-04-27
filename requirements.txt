@@ -13,3 +13,10 @@ pydantic-settings~=2.8.1
 python-dotenv~=1.1.0
 starlette~=0.46.1
 nanoid~=2.0.0
+python-jose~=3.4.0
+passlib~=1.7.4
+email-validator~=2.2.0
+python-multipart~=0.0.20
+
+
+

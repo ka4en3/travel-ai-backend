@@ -6,17 +6,17 @@ from datetime import datetime
 
 
 class AICacheBase(BaseModel):
+    cache_key: str
     original_prompt: str
     prompt_hash: str
-
     origin: str
     destination: str
     duration_days: int
     budget: float
-    cache_key: str
     interests: Optional[List[str]] = None
-
     result: dict
+    user_id: Optional[int] = None
+    expires_at: Optional[datetime] = None
 
     @field_validator("origin", "destination")
     @classmethod

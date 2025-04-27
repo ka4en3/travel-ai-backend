@@ -5,6 +5,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.security import OAuth2PasswordRequestForm
 
+from exceptions.route import PermissionDeniedError
 from repositories.user import UserRepository
 
 from services.crud.user_service import UserService
@@ -32,15 +33,23 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     svc: UserService = Depends(get_user_service),
 ):
+    """
+    Login endpoint.
+    Returns JWT for authenticated users.
+    """
     try:
-        token = await svc.authenticate(form_data.username, form_data.password)
+        token = await svc.authenticate(email=form_data.username, password=form_data.password)
     except AuthenticationError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return {"access_token": token, "token_type": "bearer"}
+    except Exception as e:
+        logger.warning(str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return token
 
 
 @router.post("/telegram-login", response_model=Token)
@@ -76,6 +85,9 @@ async def register(
     """
     try:
         return await svc.register(user_in)
+    except PermissionDeniedError as e:
+        logger.warning(str(e))
+        raise HTTPException(status_code=403, detail=e.message)
     except UserAlreadyExistsError as e:
         logger.warning(str(e))
         raise HTTPException(status_code=409, detail=e.message)

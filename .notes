@@ -1,6 +1,3 @@
-- route_service will get input from ai_cache (blind cap for real AI API)
-- route_scheme splitted to RouteCreateIn and RouteCreate
-- JWT auth
 - run Gunicorn + workers
 - AICache CRUD
 - migrations: add Data types to downgrade

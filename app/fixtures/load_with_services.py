@@ -38,8 +38,13 @@ async def load_users(session):
     for data in USERS_FIXTURES:
         user_in = UserCreate(**data)
         try:
-            user = await service.create_user(user_in)
+            user = await service.register(user_in)
             logger.info("✅ Created User id=%s", user.id)
+
+            if user.email and "password" in data:
+                token = await service.authenticate(user.email, data["password"])
+                logger.info("🪙 Token for %s: %s", user.email, token.access_token)
+
         except Exception as e:
             logger.error("❌ Skipping user %s: %s", data, e)
 
