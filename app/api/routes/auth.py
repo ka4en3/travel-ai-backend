@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.security import OAuth2PasswordRequestForm
 
 from repositories.user import UserRepository
@@ -15,6 +15,7 @@ from schemas.user import UserCreate, UserRead
 from exceptions.user import (
     UserAlreadyExistsError,
     InvalidUserDataError,
+    AuthenticationError,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,13 +34,33 @@ async def login(
 ):
     try:
         token = await svc.authenticate(form_data.username, form_data.password)
-    except Exception as e:
+    except AuthenticationError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.post("/telegram-login", response_model=Token)
+async def telegram_login(
+    telegram_id: int = Body(..., embed=True),
+    svc: UserService = Depends(get_user_service),
+):
+    """
+    Telegram login endpoint.
+    Returns JWT for Telegram users.
+    """
+    try:
+        token = await svc.telegram_auth(telegram_id)
+    except UserAlreadyExistsError as e:
+        logger.warning(str(e))
+        raise HTTPException(status_code=409, detail=e.message)
+    except InvalidUserDataError as e:
+        logger.warning(str(e))
+        raise HTTPException(status_code=422, detail=e.message)
+    return token
 
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)

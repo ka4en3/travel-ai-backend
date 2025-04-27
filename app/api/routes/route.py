@@ -1,10 +1,13 @@
 # app/api/routes/route.py
+
 import logging
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.dependencies.access import require_route_access
+from constants.roles import RouteRole
 from db.sessions import get_session
 from api.dependencies import get_current_user
 from schemas.route import RouteRead, RouteShort, RouteGenerateRequest
@@ -34,20 +37,25 @@ def get_route_service(session: AsyncSession = Depends(get_session)) -> RouteServ
 
 
 @router.get("/", response_model=List[RouteShort])
-async def list_routes(svc: RouteService = Depends(get_route_service)):
+async def list_routes(
+    current_user=Depends(get_current_user),
+    svc: RouteService = Depends(get_route_service),
+):
     """
-    Get a list of all routes (short info).
+    Get a list of all routes for the current user (short info). No role checking.
     """
-    return await svc.list_routes()
+    return await svc.list_routes_for_user(current_user.id)
 
 
 @router.get("/{id}", response_model=RouteRead)
 async def get_route(
     id: int,
+    _=Depends(require_route_access([RouteRole.VIEWER, RouteRole.EDITOR, RouteRole.CREATOR])),
     svc: RouteService = Depends(get_route_service),
 ):
     """
-    Get detailed information about a route by ID.
+    Get detailed information about a route by ID and check access.
+    Role check for VIEWER, EDITOR and CREATOR.
     Raises:
         RouteNotFoundError: If route does not exist.
     """
@@ -58,6 +66,7 @@ async def get_route(
         raise HTTPException(status_code=404, detail=e.message)
 
 
+# search by share_code - available without role check if share_code is known
 @router.get("/by_code/{share_code}", response_model=RouteRead)
 async def get_route_by_code(
     share_code: str,
@@ -78,11 +87,17 @@ async def get_route_by_code(
 @router.get("/by_owner/{owner_id}", response_model=List[RouteRead])
 async def get_routes_by_owner(
     owner_id: int,
+    current_user=Depends(get_current_user),
     svc: RouteService = Depends(get_route_service),
 ):
     """
     Get all routes owned by a specific user.
     """
+    if current_user.id != owner_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can view only your own routes.",
+        )
     return await svc.get_route_by_owner(owner_id)
 
 
@@ -117,10 +132,12 @@ async def rebuild_route(
     id: int,
     route_in: RouteGenerateRequest,
     current_user=Depends(get_current_user),
+    _=Depends(require_route_access([RouteRole.CREATOR, RouteRole.EDITOR])),
     svc: RouteService = Depends(get_route_service),
 ):
     """
     Rebuild an existing route by ID (delete + create new).
+    Role check for CREATOR and EDITOR.
     Raises:
         RouteNotFoundError: If route does not exist.
         RouteAlreadyExistsError: If route with the same share_code already exists.
@@ -142,10 +159,12 @@ async def rebuild_route(
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_route(
     id: int,
+    _=Depends(require_route_access([RouteRole.CREATOR, RouteRole.EDITOR])),
     svc: RouteService = Depends(get_route_service),
 ):
     """
     Delete a route by ID.
+    Role check for CREATOR and EDITOR.
     Raises:
         RouteNotFoundError: If route does not exist.
     """

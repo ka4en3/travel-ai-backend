@@ -202,6 +202,15 @@ class RouteService:
         logger.info("Route service: fetched %s Routes", len(routes))
         return routes
 
+    async def list_routes_for_user(self, user_id: int) -> List[RouteShort]:
+        """
+        Return a short list of all routes for a specific user.
+        """
+        accessible_ids = await self.access_repo.get_route_ids_by_user(user_id)
+        routes = await self.route_repo.get_all_by_ids(accessible_ids)
+        logger.info("Route service: fetched %s Routes", len(routes))
+        return routes
+
     async def get_route_by_id(self, route_id: int) -> RouteRead:
         """
         Get a route by its ID.

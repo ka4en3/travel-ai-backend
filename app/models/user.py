@@ -16,16 +16,16 @@ class User(CreatedAtMixin, Base):
     __tablename__ = "users"
 
     telegram_id: Mapped[int] = mapped_column(unique=True, index=True, nullable=True)
-    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    password_hash: Mapped[str] = mapped_column(String, nullable=False)
+    email: Mapped[str] = mapped_column(String(256), unique=True, index=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(128), nullable=True, default=None)
 
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_superuser: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    username: Mapped[str | None] = mapped_column(index=True, nullable=True, default="new_user_username")
-    first_name: Mapped[str] = mapped_column(nullable=True, default="new_user_first_name")
-    last_name: Mapped[str | None] = mapped_column(nullable=True)
-    language: Mapped[str | None] = mapped_column(nullable=True)
+    username: Mapped[str | None] = mapped_column(String(128), index=True, nullable=True, default="new_user_username")
+    first_name: Mapped[str] = mapped_column(String(128), nullable=True, default="new_user_first_name")
+    last_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    language: Mapped[str | None] = mapped_column(String(16), nullable=True)
     is_premium: Mapped[bool] = mapped_column(nullable=False, default=False)
     is_bot: Mapped[bool] = mapped_column(nullable=False, default=False)
     last_active: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=func.now())

@@ -25,10 +25,11 @@ class UserRepository(BaseRepository[User]):
         """
         super().__init__(User, session)
 
-    async def create(self, user_data: UserCreate) -> User:
+    async def create(self, user_data: UserCreate, **kwargs) -> User:
         """Create a new user"""
         logger.debug("User repo: creating new User")
-        user = User(**user_data.model_dump())
+        # user = User(**user_data.model_dump())
+        user = User(**user_data.model_dump(exclude={"password"}), password_hash=kwargs.get("password_hash"))
         self.session.add(user)
         try:
             await self.session.commit()

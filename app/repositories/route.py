@@ -119,6 +119,13 @@ class RouteRepository(BaseRepository[Route]):
         )  # in case commit=False still needs to be logged
         return new_route
 
+    async def get_all_by_ids(self, route_ids: list[int]) -> list[Route]:
+        if not route_ids:
+            return []
+        stmt = select(Route).where(Route.id.in_(route_ids))
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
     # ================= ROUTE DAY ================= #
 
     async def create_day(self, route_id: int, day_data: RouteDayCreate, commit: bool = True) -> RouteDay:

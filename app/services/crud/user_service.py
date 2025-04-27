@@ -40,7 +40,7 @@ class UserService:
             raise UserAlreadyExistsError(message % user_in.telegram_id)
 
         try:
-            user = await self.repo.create(user_in)
+            user = await self.repo.create(user_in, password_hash=None)
         except Exception as e:
             message = "User service: User (telegram_id=%s) can't be created: %s. Check logs for details"
             logger.warning(message, user_in.telegram_id, e)
@@ -56,13 +56,9 @@ class UserService:
                 message = "User service: User (e-mail=%s) already exists"
                 logger.warning(message, user_in.email)
                 raise UserAlreadyExistsError(message % user_in.email)
-
             hashed = hash_password(user_in.password)
-
             try:
-                user = await self.repo.create(
-                    UserCreate(**user_in.model_dump(exclude={"password"}), password_hash=hashed)
-                )
+                user = await self.repo.create(user_in, password_hash=hashed)
             except Exception as e:
                 message = "User service: User (e-mail=%s) can't be created: %s. Check logs for details"
                 logger.warning(message, user_in.email, e)
@@ -82,16 +78,31 @@ class UserService:
 
     async def authenticate(self, email: str, password: str) -> Token:
         """
-        Проверить email/password.
-        Raises AuthenticationError если невалидно.
-
-        Аутентифицировать и вернуть JWT.
+        Authenticate user and return JWT.
+        Raises:
+            AuthenticationError: if user not found or password is incorrect
         """
         user = await self.repo.get_by_email(email)
-        if not user or not verify_password(password, user.password_hash):
+        if not user or not user.password_hash or not verify_password(password, user.password_hash):
             raise AuthenticationError()
         token = create_access_token(subject=str(user.id))
         return Token(access_token=token)
+
+    async def telegram_auth(self, telegram_id: int) -> Token:
+        """
+        Authenticate Telegram user and return JWT.
+        """
+        user = await self.get_or_create_telegram_user(telegram_id)
+        token = create_access_token(subject=str(user.id), telegram=True)
+        return Token(access_token=token)
+
+    async def get_or_create_telegram_user(self, telegram_id: int) -> UserRead:
+        existing = await self.repo.get_by_telegram_id(telegram_id)
+        if existing:
+            return existing
+        # create new Telegram user
+        user_create = UserCreate(telegram_id=telegram_id)
+        return await self._create_telegram_user(user_create)
 
     async def get_user_by_id(self, user_id: int) -> UserRead:
         """

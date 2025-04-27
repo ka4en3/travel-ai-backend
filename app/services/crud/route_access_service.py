@@ -59,6 +59,9 @@ class RouteAccessService:
             raise PermissionDeniedError(msg % (user_id, allowed, action, access.role))
         return True
 
+    async def check_user_has_access(self, user_id: int, route_id: int, required_roles: List[RouteRole]) -> bool:
+        return await self._ensure_has_role(user_id, route_id, required_roles, action="access route")
+
     async def get_share_code(self, user_id: int, route_id: int) -> str:
         """
         Return share_code for a route if user is CREATOR or EDITOR.

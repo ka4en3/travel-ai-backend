@@ -51,6 +51,11 @@ class RouteAccessRepository(BaseRepository[RouteAccess]):
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
+    async def get_route_ids_by_user(self, user_id: int) -> list[int]:
+        stmt = select(RouteAccess.route_id).where(RouteAccess.user_id == user_id)
+        result = await self.session.execute(stmt)
+        return [row[0] for row in result.all()]
+
     async def create(self, obj_in: RouteAccessCreate, commit: bool = True) -> RouteAccess:
         """
         Create a new RouteAccess entry.
