@@ -93,22 +93,5 @@ except Exception as e:
     logger.error("Unexpected error during settings initialization: %s", e)
     raise
 
-
-# Optional: Function to load settings for testing
-def get_test_settings() -> Settings:
-    """Create a test settings instance with mock data."""
-    test_data = {
-        "POSTGRES_USER": "test_user",
-        "POSTGRES_PASSWORD": "test_pass",
-        "POSTGRES_DB": "test_db",
-        "REDIS_URL": "redis://localhost:6379",
-        "TELEGRAM_TOKEN": "test_token",
-        "CHATGPT_API_KEY": "test_key",
-        "API_HOST": "127.0.0.1",
-        "API_PORT": 8001,
-    }
-    return Settings(**test_data)
-
-
 if __name__ == "__main__":
     settings.display()

@@ -19,8 +19,6 @@ dependencies = [
     "pylint>=3.3.6",
     "python-jose[cryptography]>=3.4.0",
     "python-multipart>=0.0.20",
-    "redis>=5.2.1",
-    "reportlab>=4.3.1",
     "sqlalchemy>=2.0.40",
     "starlette>=0.46.1",
     "uvicorn>=0.34.0",
@@ -30,4 +28,6 @@ dependencies = [
 dev = [
     "black>=25.1.0",
     "python-dotenv>=1.1.0",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
 ]

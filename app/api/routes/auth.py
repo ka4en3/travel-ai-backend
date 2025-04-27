@@ -5,6 +5,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.security import OAuth2PasswordRequestForm
 
+from api.dependencies import get_current_user
 from exceptions.route import PermissionDeniedError
 from repositories.user import UserRepository
 
@@ -20,7 +21,7 @@ from exceptions.user import (
 )
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/users/auth", tags=["Auth"])
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 def get_user_service(session: AsyncSession = Depends(get_session)) -> UserService:
@@ -28,7 +29,15 @@ def get_user_service(session: AsyncSession = Depends(get_session)) -> UserServic
     return UserService(UserRepository(session))
 
 
-@router.post("/token", response_model=Token)
+@router.get("/me", response_model=UserRead)
+async def read_current_user(current_user: UserRead = Depends(get_current_user)):
+    """
+    Get current user.
+    """
+    return current_user
+
+
+@router.post("/login", response_model=Token)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     svc: UserService = Depends(get_user_service),
@@ -48,11 +57,10 @@ async def login(
     except Exception as e:
         logger.warning(str(e))
         raise HTTPException(status_code=500, detail=str(e))
-
     return token
 
 
-@router.post("/telegram-login", response_model=Token)
+@router.post("/telegram-login", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def telegram_login(
     telegram_id: int = Body(..., embed=True),
     svc: UserService = Depends(get_user_service),
