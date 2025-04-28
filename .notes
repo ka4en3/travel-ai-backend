@@ -1,6 +1,6 @@
 - run Gunicorn + workers
 - AICache CRUD
-- migrations: add Data types to downgrade
+
 
 
 alembic revision --autogenerate -m "Initial migration"
@@ -25,84 +25,6 @@ Then check for tables:
 
 
 
-🔹 1. ✅ Первичная Alembic миграция
-Создание таблиц из моделей
-🔁 После этого структура БД готова.
-
-🔹 2. ✅ Pydantic-схемы (schemas/)
-Для валидации входящих и исходящих данных в API и боте.
-UserCreate, RouteResponse, ActivityIn, AICacheOut, и т.д.
-Помогут строить документацию (Swagger), тесты и сериализацию
-
-🔹 3. ✅ Базовый CRUD
-Прямые функции: создать маршрут, получить список, сохранить результат ChatGPT
-get_user_by_telegram_id()
-create_route(), get_routes_by_user_id()
-cache_ai_response(), get_cached_result()
-
-🔹 4. ✅ Бизнес-логика (services/)
-AI, маршруты, экспорт — как orchestrators
-ai_service.py: генерация маршрута
-route_service.py: сохранение / обновление / экспорт
-(можно пока без export_service)
-
-🔹 5. ✅ Минимальное API (api/routes/*.py)
-Эндпоинты, которые вызываются ботом или фронтом
-/ai/generate
-/routes
-/routes/{id}/export
-
-
-
-
-├── bot/                             # Telegram bot service
-│   ├── Dockerfile                   # Dockerfile for bot
-│   ├── requirements.txt             # Bot dependencies
-│   └── app/
-│       ├── bot.py                   # Aiogram entrypoint
-│       ├── config.py                # Bot config
-│       ├── handlers/                # Command logic
-│       │   ├── start.py
-│       │   ├── route.py
-│       │   └── export.py
-│       ├── keyboards/               # Inline/reply keyboards
-│       │   └── route_keyboard.py
-│       └── states/                  # FSM conversation states
-│           └── route_states.py
-
-
-
-services:
-  db:
-    image: postgres:16
-    container_name: db
-    restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5v
-
-
-  bot:
-    build: ./bot
-    container_name: bot
-    env_file: .env
-    depends_on:
-      backend:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "echo", "ok"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+op.execute("DROP TYPE IF EXISTS routerole")
+op.execute("DROP TYPE IF EXISTS exporttype")
+op.execute("DROP TYPE IF EXISTS exportstatus")

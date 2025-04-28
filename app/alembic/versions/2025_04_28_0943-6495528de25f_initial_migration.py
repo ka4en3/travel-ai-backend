@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 2904ebfff1eb
+Revision ID: 6495528de25f
 Revises:
-Create Date: 2025-04-27 20:13:59.068640
+Create Date: 2025-04-28 09:43:42.738800
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "2904ebfff1eb"
+revision: str = "6495528de25f"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -186,7 +186,7 @@ def upgrade() -> None:
             ["user_id"],
             ["users.id"],
             name=op.f("fk_route_access_user_id_users"),
-            ondelete="SET NULL",
+            ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_route_access")),
         sa.UniqueConstraint("user_id", "route_id", name="uq_user_route"),
@@ -261,7 +261,6 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_users_id"), table_name="users")
     op.drop_index(op.f("ix_users_email"), table_name="users")
     op.drop_table("users")
-
     op.execute("DROP TYPE IF EXISTS routerole")
     op.execute("DROP TYPE IF EXISTS exporttype")
     op.execute("DROP TYPE IF EXISTS exportstatus")

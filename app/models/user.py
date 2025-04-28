@@ -47,6 +47,7 @@ class User(CreatedAtMixin, Base):
 
     route_access: Mapped[list["RouteAccess"]] = relationship(
         back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     exports: Mapped[list["Export"]] = relationship(

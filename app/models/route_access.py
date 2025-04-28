@@ -10,7 +10,7 @@ from constants.roles import RouteRole
 class RouteAccess(Base):
     __tablename__ = "route_access"
 
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     route_id: Mapped[int] = mapped_column(ForeignKey("routes.id", ondelete="CASCADE"), nullable=False)
     role: Mapped[RouteRole] = mapped_column(PgEnum(RouteRole), nullable=False, default=RouteRole.VIEWER)
 
