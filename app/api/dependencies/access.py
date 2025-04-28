@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.sessions import get_session
+from exceptions.route import PermissionDeniedError
 from repositories.route_access import RouteAccessRepository
 from repositories.route import RouteRepository
 from services.crud.route_access_service import RouteAccessService
@@ -38,6 +39,8 @@ def require_route_access(required_roles: List[RouteRole]):
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="User does not have permission for this route",
                 )
+        except PermissionDeniedError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
         except RouteAccessNotFoundError as e:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 

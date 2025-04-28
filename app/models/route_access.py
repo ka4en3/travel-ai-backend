@@ -21,7 +21,7 @@ class RouteAccess(Base):
         back_populates="access_list",
     )
 
-    __table_args__ = (UniqueConstraint("user_id", "route_id", name="uq_user_route"),)
+    __table_args__ = (UniqueConstraint("user_id", "route_id", "role", name="uq_user_route"),)
 
     def __repr__(self) -> str:
         return f"<RouteAccess(user_id={self.user_id}, route_id={self.route_id}, role={self.role})>"

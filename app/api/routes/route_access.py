@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from constants.roles import RouteRole
 from db.sessions import get_session
 from schemas.route_access import RouteAccessRead
 from schemas.user import UserRead
@@ -89,7 +90,8 @@ async def revoke_access(
     Revoke any access (VIEWER or EDITOR) from a user. Only CREATOR or EDITOR can do this.
     """
     try:
-        await service.revoke_access(current_user.id, target_user_id, route_id)
+        await service.revoke_access(current_user.id, target_user_id, route_id, RouteRole.VIEWER)
+        await service.revoke_access(current_user.id, target_user_id, route_id, RouteRole.EDITOR)
         return {"message": "Access revoked successfully."}
     except RouteNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))

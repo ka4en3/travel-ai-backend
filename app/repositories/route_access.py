@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from constants.roles import RouteRole
 from models.route_access import RouteAccess
 from schemas.route_access import RouteAccessCreate
 from repositories.base import BaseRepository
@@ -24,12 +25,16 @@ class RouteAccessRepository(BaseRepository[RouteAccess]):
     def __init__(self, session: AsyncSession):
         super().__init__(RouteAccess, session)
 
-    async def get_by_user_and_route(self, user_id: int, route_id: int) -> Optional[RouteAccess]:
+    async def get_by_user_and_route_and_role(
+        self, user_id: int, route_id: int, role: RouteRole
+    ) -> Optional[RouteAccess]:
         """
-        Get route access entry by user_id and route_id.
+        Get route access entry by user_id, route_id and role.
         """
         logger.debug("Route access repo: fetching RouteAccess (user_id=%s, route_id=%s)", user_id, route_id)
-        stmt = select(RouteAccess).where(RouteAccess.user_id == user_id, RouteAccess.route_id == route_id)
+        stmt = select(RouteAccess).where(
+            RouteAccess.user_id == user_id, RouteAccess.route_id == route_id, RouteAccess.role == role
+        )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -76,15 +81,19 @@ class RouteAccessRepository(BaseRepository[RouteAccess]):
         )  # in case commit=False still needs to be logged
         return new_access
 
-    async def delete_by_user_and_route(self, user_id: int, route_id: int) -> bool:
+    async def delete_by_user_and_route_and_role(self, user_id: int, route_id: int, role: RouteRole) -> bool:
         """
-        Delete RouteAccess entry for given user and route.
+        Delete RouteAccess entry for given user, route and role.
         """
-        delete_access = await self.get_by_user_and_route(user_id, route_id)
+        delete_access = await self.get_by_user_and_route_and_role(user_id, route_id, role)
         if not delete_access:
-            logger.debug("Route access repo: RouteAccess (user_id=%s, route_id=%s) not found", user_id, route_id)
+            logger.debug(
+                "Route access repo: RouteAccess (user_id=%s, route_id=%s, role=%s) not found", user_id, route_id, role
+            )
             return False
         await self.session.delete(delete_access)
         await self.session.commit()
-        logger.debug("Route access repo: deleted RouteAccess (user_id=%s, route_id=%s)", user_id, route_id)
+        logger.debug(
+            "Route access repo: deleted RouteAccess (user_id=%s, route_id=%s, role=%s)", user_id, route_id, role
+        )
         return True

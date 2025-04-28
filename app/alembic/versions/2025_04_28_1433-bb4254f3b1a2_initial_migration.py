@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 6495528de25f
+Revision ID: bb4254f3b1a2
 Revises:
-Create Date: 2025-04-28 09:43:42.738800
+Create Date: 2025-04-28 14:33:12.894337
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "6495528de25f"
+revision: str = "bb4254f3b1a2"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -189,7 +189,7 @@ def upgrade() -> None:
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_route_access")),
-        sa.UniqueConstraint("user_id", "route_id", name="uq_user_route"),
+        sa.UniqueConstraint("user_id", "route_id", "role", name="uq_user_route"),
     )
     op.create_index(op.f("ix_route_access_id"), "route_access", ["id"], unique=False)
     op.create_table(
