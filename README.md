@@ -156,14 +156,14 @@ pytest
 
 ## 🎯 Next Steps
 
-0. **AI API**: integrate route building by promting of proper AI (ChatGPT, Gemini)
-0. **Redis**: introduce Redis for intermediate AI prompt caching (quick cache)
-1. **Webhook**: expose `/webhook/telegram` and wire to your bot  
-2. **Exports**: implement Google Calendar & PDF exports  
-3. **Pagination**: add `limit`/`offset` to listing endpoints  
-4. **Monitoring & Metrics**: request tracing, Redis hit ratio, errors  
-5. **Rate-Limiting**: protect AI calls and public routes  
-6. **Production Hardening**: dockerize, k8s manifests, secrets management  
+1. **AI API**: integrate route building by promting of proper AI (ChatGPT, Gemini)
+2. **Redis**: introduce Redis for intermediate AI prompt caching (quick cache)
+3. **Webhook**: expose `/webhook/telegram` and wire to your bot  
+4. **Exports**: implement Google Calendar & PDF exports  
+5. **Pagination**: add `limit`/`offset` to listing endpoints  
+6. **Monitoring & Metrics**: request tracing, Redis hit ratio, errors  
+7. **Rate-Limiting**: protect AI calls and public routes  
+8. **Production Hardening**: dockerize, k8s manifests, secrets management  
 
 ---
 
