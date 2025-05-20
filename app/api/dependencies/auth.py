@@ -11,7 +11,7 @@ from schemas.token import TokenPayload
 from services.crud.user_service import UserService
 from utils.security import decode_access_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 async def get_user_service(session=Depends(get_session)) -> UserService:
